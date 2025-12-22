@@ -67,7 +67,7 @@ export default function UniWidget() {
             onClick={handleCardClick}
             className="block h-full w-full cursor-pointer"
         >
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] transition-transform duration-300 will-change-transform">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-start pointer-events-none">

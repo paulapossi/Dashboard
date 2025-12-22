@@ -46,7 +46,7 @@ export default function RelationshipWidget() {
     return (
         <Link href="/paula" className="block h-full w-full">
             {/* CONTAINER STYLE */}
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-rose-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/30 transition-all cursor-pointer">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-rose-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(225,29,72,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
 
                 {/* HEADER */}
                 <div className="flex justify-between items-start">
