@@ -1,0 +1,50 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- DEINE MODELLE ---
+
+model UniTask {
+  id        String    @id @default(cuid())
+  title     String
+  isDone    Boolean   @default(false)
+  deadline  DateTime?
+  priority  String    @default("IMPORTANT")
+  createdAt DateTime  @default(now())
+}
+
+model DailyLog {
+  id                    String   @id @default(cuid())
+  date                  DateTime @default(now())
+  mainTask              String?
+  goalDeepWorkMinutes   Int?
+  actualDeepWorkMinutes Int      @default(0)
+  focusLevel            Int      @default(0)
+  distraction           String?
+  outputProduced        Boolean  @default(false)
+  topic                 String?
+  understandingLevel    Int      @default(0)
+  canExplain            Boolean  @default(false)
+  technicalConcept      String?
+  businessExplanation   String?
+  talkedToSenior        Boolean  @default(false)
+  realityCheckBusy      Boolean  @default(false)
+  realityCheckAvoided   Boolean  @default(false)
+  realWorldApplication  String?
+}
+
+model WeeklySkillStack {
+  id                 String   @id @default(cuid())
+  weekNumber         Int
+  year               Int
+  analysisSkill      String   @default("EQUAL")
+  communicationSkill String   @default("EQUAL")
+  structureSkill     String   @default("EQUAL")
+  toolSkill          String   @default("EQUAL")
+  createdAt          DateTime @default(now())
+}

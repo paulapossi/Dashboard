@@ -1,354 +1,198 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Search, Bell, UserCircle, GraduationCap, Clock, Trash2, AlertCircle, FileText, Plus, Calendar as CalIcon, Check, Minus } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { getTodayLog, getTasks, updateDailyLog, addTask, toggleTask } from "@/actions/uni-actions";
+import { CheckCircle2, AlertCircle, Brain, Briefcase, Clock, Zap, Network, Plus } from "lucide-react";
 
-// --- TYPEN ---
-type Task = {
-    id: number;
-    text: string;
-    completed: boolean;
-    tag: "Exam" | "Assignment" | "Study";
-};
+export default async function UniPage() {
+  // Daten vom Server holen
+  const log = await getTodayLog();
+  const { critical, important } = await getTasks();
 
-type Exam = {
-    id: number;
-    subject: string;
-    date: string; // Format: YYYY-MM-DD
-};
+  return (
+    // HIER GEÄNDERT: Hintergrund auf Anthrazit (#18181b) gesetzt
+    <div className="flex h-screen bg-[#27272a] text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30">
+      
+      {/* SIDEBAR */}
+      <div className="relative z-50 h-full flex-shrink-0">
+        <Sidebar />
+      </div>
 
-export default function UniPage() {
-    // --- STATE ---
-    const [sessions, setSessions] = useState(0);
-    // NEU: Ziel auf 7 erhöht
-    const WEEKLY_GOAL = 7;
-
-    // Tasks
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [newTaskInput, setNewTaskInput] = useState("");
-
-    // Exams
-    const [exams, setExams] = useState<Exam[]>([]);
-    const [showExamInput, setShowExamInput] = useState(false);
-    const [newExamSubject, setNewExamSubject] = useState("");
-    const [newExamDate, setNewExamDate] = useState("");
-
-    // --- LOAD DATA ---
-    useEffect(() => {
-        const savedSessions = localStorage.getItem("uni-data-v1");
-        if (savedSessions) setSessions(parseInt(savedSessions));
-
-        const savedTasks = localStorage.getItem("uni-tasks-v1");
-        if (savedTasks) setTasks(JSON.parse(savedTasks));
-
-        const savedExams = localStorage.getItem("uni-exams-v1");
-        if (savedExams) {
-            setExams(JSON.parse(savedExams));
-        } else {
-            setExams([
-                { id: 1, subject: "Statistik II", date: "2026-01-24" },
-                { id: 2, subject: "Wirtschaftsinformatik", date: "2026-02-03" }
-            ]);
-        }
-    }, []);
-
-    // --- HELPER ---
-    const getDaysLeft = (dateString: string) => {
-        const examDate = new Date(dateString);
-        const today = new Date();
-        const diffTime = examDate.getTime() - today.getTime();
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    };
-
-    // --- ACTIONS ---
-
-    // 1. Session Log (Hinzufügen)
-    const addSession = () => {
-        const newCount = sessions + 1;
-        setSessions(newCount);
-        localStorage.setItem("uni-data-v1", newCount.toString());
-        window.dispatchEvent(new Event("storage"));
-    };
-
-    // NEU: Session Log (Entfernen / Korrektur)
-    const removeSession = () => {
-        if (sessions > 0) {
-            const newCount = sessions - 1;
-            setSessions(newCount);
-            localStorage.setItem("uni-data-v1", newCount.toString());
-            window.dispatchEvent(new Event("storage"));
-        }
-    };
-
-    // Tasks Logic
-    const handleAddTask = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newTaskInput.trim()) return;
-        const newTask: Task = { id: Date.now(), text: newTaskInput, completed: false, tag: "Study" };
-        const updated = [newTask, ...tasks];
-        setTasks(updated);
-        localStorage.setItem("uni-tasks-v1", JSON.stringify(updated));
-        setNewTaskInput("");
-    };
-
-    const toggleTask = (id: number) => {
-        const updated = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-        setTasks(updated);
-        localStorage.setItem("uni-tasks-v1", JSON.stringify(updated));
-    };
-
-    const deleteTask = (id: number) => {
-        const updated = tasks.filter(t => t.id !== id);
-        setTasks(updated);
-        localStorage.setItem("uni-tasks-v1", JSON.stringify(updated));
-    };
-
-    // Exams Logic
-    const handleAddExam = () => {
-        if (!newExamSubject || !newExamDate) return;
-        const newExam: Exam = { id: Date.now(), subject: newExamSubject, date: newExamDate };
-        const updated = [...exams, newExam].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        setExams(updated);
-        localStorage.setItem("uni-exams-v1", JSON.stringify(updated));
-        setNewExamSubject("");
-        setNewExamDate("");
-        setShowExamInput(false);
-    };
-
-    const deleteExam = (id: number) => {
-        const updated = exams.filter(e => e.id !== id);
-        setExams(updated);
-        localStorage.setItem("uni-exams-v1", JSON.stringify(updated));
-    };
-
-    const progressPercent = Math.min((sessions / WEEKLY_GOAL) * 100, 100);
-
-    return (
-        <div className="flex h-screen bg-[#0f1115] text-white overflow-hidden font-sans selection:bg-indigo-500/30">
-            <div className="relative z-50 h-full flex-shrink-0"><Sidebar /></div>
-
-            <main className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
-
-                {/* BACKGROUND */}
-                <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#0f1115]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0f1115] to-[#0f1115]"></div>
-                    <div className="absolute top-[-10%] right-[-5%] w-[700px] h-[700px] bg-indigo-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
-                </div>
-
-                {/* HEADER */}
-                <header className="flex justify-between items-center relative z-10">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-                            University & Focus <GraduationCap className="text-indigo-400" size={28} />
-                        </h1>
-                        <p className="text-slate-400 text-sm mt-1">Prüfungsphase & Deadlines</p>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex items-center bg-slate-800/50 px-4 py-2.5 rounded-full border border-slate-700 text-slate-400 w-64">
-                            <Search size={18} className="mr-3" />
-                            <span className="text-sm">Search...</span>
-                        </div>
-                        <div className="flex items-center gap-4 text-slate-400">
-                            <Bell size={20} className="hover:text-white cursor-pointer" />
-                            <UserCircle size={28} className="hover:text-white cursor-pointer" />
-                        </div>
-                    </div>
-                </header>
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 relative z-10">
-
-                    {/* LINKE SPALTE */}
-                    <div className="flex flex-col gap-8">
-
-                        {/* SESSION TRACKER (UPDATE: Mit Minus-Button) */}
-                        <div className="bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-8 flex flex-col shadow-lg">
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <h3 className="text-xl font-bold text-white">Study Sessions</h3>
-                                    <p className="text-indigo-200/50 text-sm">Fokus Zeit diese Woche</p>
-                                </div>
-                                <div className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs border border-indigo-500/20">
-                                    Ziel: {WEEKLY_GOAL}h
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-6">
-                                <div className="flex-1">
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className="text-slate-400 font-bold">{sessions} / {WEEKLY_GOAL} Sessions</span>
-                                        <span className="text-indigo-400 font-bold">{Math.round(progressPercent)}%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-white/5">
-                                        <motion.div
-                                            className="bg-indigo-500 h-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${progressPercent}%` }}
-                                            transition={{ duration: 1 }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Button Gruppe */}
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={removeSession}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-all border border-white/5 active:scale-95"
-                                        title="Letzte Session entfernen"
-                                    >
-                                        <Minus size={18} />
-                                    </button>
-
-                                    <button
-                                        onClick={addSession}
-                                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex flex-col items-center justify-center h-14 min-w-[100px]"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <Clock size={18} /> <span>+1h</span>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* EXAM TRACKER (UPDATE: Better Animations) */}
-                        <div className="bg-[#1e293b]/40 backdrop-blur-md border border-white/5 rounded-[32px] p-8 shadow-2xl flex-1 flex flex-col min-h-[400px]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <AlertCircle className="text-orange-400" size={20} /> Anstehende Prüfungen
-                                </h3>
-                                <button
-                                    onClick={() => setShowExamInput(!showExamInput)}
-                                    className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors text-slate-300 hover:text-white"
-                                >
-                                    {showExamInput ? <Check size={18} /> : <Plus size={18} />}
-                                </button>
-                            </div>
-
-                            <AnimatePresence>
-                                {showExamInput && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="mb-4 overflow-hidden"
-                                    >
-                                        <div className="flex gap-2 mb-2">
-                                            <input
-                                                type="text" placeholder="Fach (z.B. Mathe)"
-                                                value={newExamSubject} onChange={e => setNewExamSubject(e.target.value)}
-                                                className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                                            />
-                                            <input
-                                                type="date"
-                                                value={newExamDate} onChange={e => setNewExamDate(e.target.value)}
-                                                className="bg-slate-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-indigo-500"
-                                            />
-                                        </div>
-                                        <button onClick={handleAddExam} className="w-full py-2 bg-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-500 transition-colors">
-                                            Prüfung hinzufügen
-                                        </button>
-                                        <hr className="border-white/5 my-4" />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            <div className="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-                                <AnimatePresence mode="popLayout">
-                                    {exams.length === 0 ? (
-                                        <motion.p
-                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                            className="text-slate-500 text-sm text-center py-4"
-                                        >
-                                            Keine Prüfungen eingetragen.
-                                        </motion.p>
-                                    ) : exams.map((exam) => {
-                                        const days = getDaysLeft(exam.date);
-                                        return (
-                                            <motion.div
-                                                key={exam.id}
-                                                layout // WICHTIG: Sorgt für flüssiges Umsortieren
-                                                initial={{ scale: 0.9, opacity: 0 }}
-                                                animate={{ scale: 1, opacity: 1 }}
-                                                exit={{ scale: 0.9, opacity: 0 }}
-                                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                                                className="group p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:border-indigo-500/30 transition-colors flex items-center justify-between relative cursor-default"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-slate-900 flex flex-col items-center justify-center border border-white/5 group-hover:border-indigo-500/50 transition-colors">
-                                                        <CalIcon size={16} className="text-slate-500 mb-0.5 group-hover:text-indigo-400 transition-colors" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-200 group-hover:text-white transition-colors">{exam.subject}</h4>
-                                                        <p className="text-xs text-slate-500">{exam.date}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right mr-6">
-                                                    <span className={`block text-xl font-black ${days <= 7 ? 'text-red-400 animate-pulse' : 'text-indigo-400'}`}>{days}</span>
-                                                    <span className="text-[10px] text-slate-500 uppercase font-bold">Tage</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => deleteExam(exam.id)}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 p-2 transition-all bg-slate-900/80 rounded-lg backdrop-blur-sm"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </motion.div>
-                                        );
-                                    })}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RECHTE SPALTE: TASKS */}
-                    <div className="bg-[#1e293b]/40 backdrop-blur-md border border-white/5 rounded-[32px] p-8 shadow-2xl h-full flex flex-col min-h-[500px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <FileText className="text-indigo-400" size={20} /> Tasks & To-Dos
-                            </h3>
-                            <div className="text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full border border-white/5">
-                                {tasks.filter(t => !t.completed).length} Offen
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleAddTask} className="relative mb-6">
-                            <input
-                                type="text" value={newTaskInput} onChange={(e) => setNewTaskInput(e.target.value)}
-                                placeholder="Neue Aufgabe..."
-                                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 pl-5 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all"
-                            />
-                            <button type="submit" className="absolute right-2 top-2 p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors">
-                                <Plus size={20} />
-                            </button>
-                        </form>
-
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
-                            <AnimatePresence mode="popLayout">
-                                {tasks.map((task) => (
-                                    <motion.div
-                                        key={task.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        className={`group p-4 rounded-xl border transition-all flex items-center gap-4 select-none ${task.completed ? "bg-slate-900/30 border-transparent opacity-60" : "bg-slate-800/40 border-white/5 hover:border-indigo-500/30"}`}
-                                    >
-                                        <div onClick={() => toggleTask(task.id)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all ${task.completed ? "bg-indigo-500 border-indigo-500" : "border-slate-600 hover:border-indigo-400"}`}>
-                                            {task.completed && <Check size={14} className="text-white" strokeWidth={3} />}
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className={`font-medium text-sm transition-all ${task.completed ? "text-slate-500 line-through" : "text-slate-200"}`}>{task.text}</p>
-                                        </div>
-                                        <button onClick={() => deleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-2"><Trash2 size={16} /></button>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    </div>
-                </div>
-            </main>
+      <main className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
+        
+        {/* BACKGROUND EFFECTS (Angepasst auf Anthrazit) */}
+        <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#18181b]">
+             {/* Dezenter Verlauf von etwas hellerem Grau oben links nach dunkel unten rechts */}
+             <div className="absolute inset-0 bg-gradient-to-br from-[#27272a] via-[#18181b] to-[#09090b]"></div>
+             {/* Der Glow-Effekt oben rechts bleibt, aber dezenter */}
+             <div className="absolute top-[-10%] right-[-5%] w-[700px] h-[700px] bg-indigo-500/5 rounded-full blur-[120px] mix-blend-screen"></div>
         </div>
-    );
+
+        <div className="relative z-10 max-w-6xl mx-auto w-full space-y-10 pb-20">
+            
+            {/* --- HEADER --- */}
+            <header className="border-b border-white/10 pb-8">
+              <h1 className="text-3xl font-bold text-white mb-2 tracking-tight flex items-center gap-3">
+                  Career & Skill Cockpit <Briefcase className="text-indigo-400" />
+              </h1>
+              <p className="text-slate-400 mb-8">Output is the only metric that counts. No Excuses.</p>
+              
+              {/* MAIN FOCUS FORM */}
+              <form action={updateDailyLog} className="bg-[#27272a]/50 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row gap-6 items-end shadow-xl">
+                <div className="flex-1 w-full">
+                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Main Focus Today</label>
+                  <input 
+                    name="mainTask"
+                    defaultValue={log?.mainTask || ''}
+                    placeholder="Was ist die EINE Sache heute?" 
+                    className="w-full bg-[#18181b] border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600"
+                  />
+                </div>
+                <div className="w-full md:w-48">
+                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Ziel: Deep Work</label>
+                  <div className="relative">
+                    <input 
+                      name="goalDeepWorkMinutes"
+                      type="number"
+                      defaultValue={log?.goalDeepWorkMinutes || 120}
+                      className="w-full bg-[#18181b] border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 transition-colors pl-10"
+                    />
+                    <span className="absolute right-4 top-3 text-slate-500 text-sm">min</span>
+                    <Clock className="absolute left-3 top-3.5 w-4 h-4 text-slate-500" />
+                  </div>
+                </div>
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-indigo-500/20 w-full md:w-auto hover:scale-105 active:scale-95">
+                  Set Focus
+                </button>
+              </form>
+            </header>
+
+            {/* --- SECTION 1: DEEP WORK TRACKER --- */}
+            <section className="grid md:grid-cols-2 gap-8">
+                <div className="bg-[#27272a]/30 backdrop-blur-md border border-white/5 rounded-[24px] p-6 hover:border-white/10 transition-colors">
+                    <div className="flex items-center gap-3 mb-6 text-emerald-400">
+                        <Zap className="w-5 h-5" />
+                        <h2 className="font-bold tracking-wide text-white">DEEP WORK LOG</h2>
+                    </div>
+                    <form action={updateDailyLog} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase block mb-2">Ist-Zeit (Min)</label>
+                                <input name="actualDeepWorkMinutes" type="number" defaultValue={log?.actualDeepWorkMinutes || 0} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase block mb-2">Focus Level (1-5)</label>
+                                <input name="focusLevel" type="number" max="5" defaultValue={log?.focusLevel || 0} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3 p-4 bg-[#18181b]/50 rounded-xl border border-white/5">
+                            <input name="outputProduced" type="checkbox" defaultChecked={log?.outputProduced} className="mt-1 w-5 h-5 accent-emerald-500" />
+                            <div>
+                                <span className="text-white font-medium block">Tangibler Output erzeugt?</span>
+                                <span className="text-xs text-slate-500">Code, Text, Analyse (Kein reines "Lesen")</span>
+                            </div>
+                        </div>
+                        <button className="w-full py-3 bg-[#18181b] hover:bg-emerald-600/20 hover:text-emerald-400 text-slate-300 rounded-xl transition-all font-medium border border-white/5 hover:border-emerald-500/30">
+                            Update Log
+                        </button>
+                    </form>
+                </div>
+
+                {/* --- SECTION 2: TRANSLATOR SKILL --- */}
+                <div className="bg-[#27272a]/30 backdrop-blur-md border border-white/5 rounded-[24px] p-6 hover:border-white/10 transition-colors">
+                    <div className="flex items-center gap-3 mb-6 text-purple-400">
+                        <Briefcase className="w-5 h-5" />
+                        <h2 className="font-bold tracking-wide text-white">TRANSLATOR SKILL</h2>
+                    </div>
+                    <form action={updateDailyLog} className="space-y-4">
+                        <input name="technicalConcept" placeholder="Technisches Konzept (z.B. API, Docker)" defaultValue={log?.technicalConcept || ''} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none" />
+                        <textarea name="businessExplanation" placeholder="Erklärung für CEO (max 2 Sätze, Business Value)" defaultValue={log?.businessExplanation || ''} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-sm text-white h-24 resize-none focus:border-purple-500 focus:outline-none" />
+                        
+                        <div className="pt-4 border-t border-white/5 mt-4">
+                            <label className="text-xs text-purple-400 uppercase block mb-2">Verständnis Check</label>
+                            <div className="flex gap-2">
+                                <input name="topic" placeholder="Gelerntes Thema heute" defaultValue={log?.topic || ''} className="flex-1 bg-[#18181b]/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:border-purple-500 focus:outline-none" />
+                                <div className="flex items-center gap-2 px-3 bg-[#18181b]/50 border border-white/10 rounded-lg">
+                                    <input name="canExplain" type="checkbox" defaultChecked={log?.canExplain} className="accent-purple-500 w-4 h-4" />
+                                    <span className="text-xs text-slate-400 whitespace-nowrap">Erklärbar?</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button className="w-full py-3 bg-[#18181b] hover:bg-purple-600/20 hover:text-purple-400 text-slate-300 rounded-xl transition-all font-medium border border-white/5 hover:border-purple-500/30">
+                            Save Learning
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            {/* --- SECTION 3: TASKS --- */}
+            <section className="grid md:grid-cols-2 gap-12 pt-4">
+                {/* LINKS: KRITISCH */}
+                <div>
+                    <h3 className="text-rose-400 font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-sm">
+                        <AlertCircle className="w-4 h-4" /> Kritisch (Deadline ≤ 7d)
+                    </h3>
+                    <div className="space-y-3">
+                        {critical.map(task => (
+                            <form key={task.id} action={toggleTask.bind(null, task.id, !task.isDone)} className="flex items-center gap-3 group bg-[#18181b]/40 p-3 rounded-xl border border-transparent hover:border-rose-500/20 transition-all">
+                                <button className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.isDone ? 'bg-rose-500 border-rose-500' : 'border-slate-600 hover:border-rose-400'}`}>
+                                    {task.isDone && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                </button>
+                                <span className={`${task.isDone ? 'text-slate-600 line-through' : 'text-slate-300'} text-sm font-medium`}>{task.title}</span>
+                            </form>
+                        ))}
+                        <form action={addTask} className="mt-4 flex gap-2">
+                            <input name="title" placeholder="+ Add Critical Task" className="bg-transparent border-b border-white/10 text-sm py-2 w-full focus:outline-none focus:border-rose-500 text-white transition-colors placeholder:text-slate-600" />
+                            <input type="hidden" name="priority" value="CRITICAL" />
+                            <button type="submit" className="text-slate-500 hover:text-rose-400"><Plus size={18} /></button>
+                        </form>
+                    </div>
+                </div>
+
+                {/* RECHTS: WICHTIG */}
+                <div>
+                    <h3 className="text-blue-400 font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-sm">
+                        <Brain className="w-4 h-4" /> Wichtig (Strategie/Backlog)
+                    </h3>
+                    <div className="space-y-3">
+                        {important.map(task => (
+                            <form key={task.id} action={toggleTask.bind(null, task.id, !task.isDone)} className="flex items-center gap-3 group bg-[#18181b]/40 p-3 rounded-xl border border-transparent hover:border-blue-500/20 transition-all">
+                                 <button className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.isDone ? 'bg-blue-600 border-blue-600' : 'border-slate-600 hover:border-blue-400'}`}>
+                                    {task.isDone && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                </button>
+                                <span className={`${task.isDone ? 'text-slate-600 line-through' : 'text-slate-300'} text-sm font-medium`}>{task.title}</span>
+                            </form>
+                        ))}
+                        <form action={addTask} className="mt-4 flex gap-2">
+                            <input name="title" placeholder="+ Add Important Task" className="bg-transparent border-b border-white/10 text-sm py-2 w-full focus:outline-none focus:border-blue-500 text-white transition-colors placeholder:text-slate-600" />
+                            <input type="hidden" name="priority" value="IMPORTANT" />
+                            <button type="submit" className="text-slate-500 hover:text-blue-400"><Plus size={18} /></button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            {/* --- SECTION 4: REALITY CHECK --- */}
+            <section className="border-t border-white/10 pt-8">
+                 <div className="flex items-center gap-3 mb-6 text-orange-400">
+                    <Network className="w-5 h-5" />
+                    <h2 className="font-bold tracking-wide text-white">REALITY CHECK & NETWORK</h2>
+                </div>
+                <form action={updateDailyLog} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-[#27272a]/30 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:bg-[#27272a]/50 transition-colors">
+                        <span className="text-sm text-slate-300">Fake Work (nur busy)?</span>
+                        <input name="realityCheckBusy" type="checkbox" defaultChecked={log?.realityCheckBusy} className="w-5 h-5 accent-orange-500" />
+                    </div>
+                    <div className="bg-[#27272a]/30 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:bg-[#27272a]/50 transition-colors">
+                        <span className="text-sm text-slate-300">Schweres vermieden?</span>
+                        <input name="realityCheckAvoided" type="checkbox" defaultChecked={log?.realityCheckAvoided} className="w-5 h-5 accent-orange-500" />
+                    </div>
+                     <button className="w-full py-2 bg-[#18181b] hover:bg-orange-500/20 hover:text-orange-400 text-slate-300 rounded-xl transition-colors border border-white/5 hover:border-orange-500/50">
+                        Confirm Reality
+                     </button>
+                </form>
+            </section>
+        </div>
+      </main>
+    </div>
+  )
 }
