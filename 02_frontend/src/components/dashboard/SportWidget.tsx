@@ -4,8 +4,10 @@ import { useState, useEffect, MouseEvent } from "react";
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toggleSportUnit } from "@/actions/sport-actions";
+import { useRouter } from "next/navigation";
 
-// Muss exakt gleich sein wie in der Page
+// Muss exakt gleich sein wie in der Page/Action
 type SportData = {
     gym1: boolean;
     gym2: boolean;
@@ -13,38 +15,64 @@ type SportData = {
     run2: boolean;
 };
 
-export default function SportWidget() {
-    const [data, setData] = useState<SportData>({
+interface SportWidgetProps {
+    initialData?: SportData;
+}
+
+export default function SportWidget({ initialData }: SportWidgetProps) {
+    const router = useRouter();
+    // Wenn initialData da ist, nutzen wir es. Sonst default false (und useEffect lädt ggf. localStorage als Fallback, falls wir das noch wollen)
+    // Wir priorisieren initialData.
+    const [data, setData] = useState<SportData>(initialData || {
         gym1: false, gym2: false, run1: false, run2: false
     });
+    
+    // Nur für Animation/Client-Mounting
     const [mounted, setMounted] = useState(false);
+    const [isPending, setIsPending] = useState(false);
 
-    // 1. Daten laden (Sync mit Page)
+    // 1. Daten laden (Legacy LocalStorage Fallback, falls kein initialData)
     useEffect(() => {
         setMounted(true);
-        const saved = localStorage.getItem("sport-data-v1");
-        if (saved) setData(JSON.parse(saved));
-    }, []);
+        if (!initialData) {
+            const saved = localStorage.getItem("sport-data-v1");
+            if (saved) setData(JSON.parse(saved));
+        } else {
+            // Wenn wir Props haben, updaten wir den State, falls sich die Props ändern (Re-Validation)
+            setData(initialData);
+        }
+    }, [initialData]);
 
     // 2. Button Logik: Die nächste offene Einheit abhaken
-    const handleQuickAdd = (e: MouseEvent) => {
+    const handleQuickAdd = async (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (isPending) return;
 
         // Wir suchen den ersten Key, der false ist
         const keys: (keyof SportData)[] = ['gym1', 'run1', 'gym2', 'run2']; // Priorität
         const nextKey = keys.find(key => !data[key]);
 
         if (nextKey) {
+            // Optimistic Update
             const newData = { ...data, [nextKey]: true };
             setData(newData);
+            
+            // Legacy Storage Update
             localStorage.setItem("sport-data-v1", JSON.stringify(newData));
-        } else {
-            // Wenn alles voll ist, resetten wir zum Testen (oder wir lassen es voll)
-            // Optional: Reset
-            // const resetData = { gym1: false, gym2: false, run1: false, run2: false };
-            // setData(resetData);
-            // localStorage.setItem("sport-data-v1", JSON.stringify(resetData));
+
+            // Server Action
+            setIsPending(true);
+            try {
+                await toggleSportUnit(nextKey);
+                router.refresh();
+            } catch (error) {
+                console.error("Failed to toggle sport unit:", error);
+                // Revert on error could be added here
+            } finally {
+                setIsPending(false);
+            }
         }
     };
 
@@ -109,6 +137,7 @@ export default function SportWidget() {
 
                     <button
                         onClick={handleQuickAdd}
+                        disabled={isPending}
                         className={`
                         w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
                         ${completedCount >= WEEKLY_GOAL

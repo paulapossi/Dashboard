@@ -4,73 +4,70 @@ import { useState, useEffect, MouseEvent } from "react";
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toggleReadingDay } from "@/actions/reading-actions";
+import { useRouter } from "next/navigation";
 
-// Datenstruktur muss exakt zur Unterseite passen
 type ReadingData = {
     day1: boolean; day2: boolean; day3: boolean; day4: boolean; day5: boolean; day6: boolean; day7: boolean;
 };
 
-export default function ReadingWidget() {
-    const [data, setData] = useState<ReadingData>({
+interface ReadingWidgetProps {
+    initialData?: ReadingData;
+}
+
+export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
+    const router = useRouter();
+    const [data, setData] = useState<ReadingData>(initialData || {
         day1: false, day2: false, day3: false, day4: false, day5: false, day6: false, day7: false
     });
     const [mounted, setMounted] = useState(false);
+    const [isPending, setIsPending] = useState(false);
 
-    // Feste Reihenfolge der Tage für die "Nächster Tag"-Logik
     const orderedKeys: (keyof ReadingData)[] = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7'];
-
-    // Funktion zum Laden der Daten
-    const loadData = () => {
-        const saved = localStorage.getItem("reading-data-v1"); // WICHTIG: Prüfe, ob dieser Key auch in deiner Unterseite genutzt wird!
-        if (saved) {
-            setData(JSON.parse(saved));
-        }
-    };
 
     useEffect(() => {
         setMounted(true);
-        loadData();
+        if (initialData) {
+            setData(initialData);
+        } else {
+            const saved = localStorage.getItem("reading-data-v1");
+            if (saved) setData(JSON.parse(saved));
+        }
+    }, [initialData]);
 
-        // Event Listener: Aktualisiert das Widget, wenn sich localStorage ändert (z.B. in anderem Tab)
-        window.addEventListener("storage", loadData);
-        // Event Listener: Aktualisiert das Widget, wenn das Fenster wieder Fokus bekommt (z.B. Zurück-Button)
-        window.addEventListener("focus", loadData);
+    const handleQuickAdd = async (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-        return () => {
-            window.removeEventListener("storage", loadData);
-            window.removeEventListener("focus", loadData);
-        };
-    }, []);
+        if (isPending) return;
 
-    // Button Logik: Nächsten offenen Tag finden
-    const handleQuickAdd = (e: MouseEvent) => {
-        e.preventDefault();     // Verhindert Navigation
-        e.stopPropagation();    // Verhindert Klick-Bubbling
-
-        // Wir suchen den ersten Tag in der Liste, der noch "false" ist
         const nextKey = orderedKeys.find(key => !data[key]);
 
         if (nextKey) {
             const newData = { ...data, [nextKey]: true };
-            setData(newData); // UI sofort updaten
-            localStorage.setItem("reading-data-v1", JSON.stringify(newData)); // Speichern
+            setData(newData);
+            localStorage.setItem("reading-data-v1", JSON.stringify(newData));
 
-            // Optional: Event feuern, damit andere Komponenten es mitbekommen
-            window.dispatchEvent(new Event("storage"));
+            setIsPending(true);
+            try {
+                await toggleReadingDay(nextKey);
+                router.refresh();
+            } catch (error) {
+                console.error("Failed to toggle reading day:", error);
+            } finally {
+                setIsPending(false);
+            }
         }
     };
 
-    // Berechnung
     const completedCount = Object.values(data).filter(Boolean).length;
     const WEEKLY_GOAL = 7;
     const progressPercent = (completedCount / WEEKLY_GOAL) * 100;
 
-    // Farben (Violett Theme)
     const getColorStatus = (count: number) => {
-        if (count >= 7) return { stroke: "#a855f7", shadow: "rgba(168,85,247,0.6)" }; // Lila (Ziel)
-        if (count >= 4) return { stroke: "#eab308", shadow: "rgba(234,179,8,0.6)" };  // Gelb (Unterwegs)
-        if (count >= 1) return { stroke: "#3b82f6", shadow: "rgba(59,130,246,0.6)" }; // Blau (Start)
-        return { stroke: "#64748b", shadow: "rgba(100,116,139,0.4)" }; // Grau
+        if (count >= 7) return { stroke: "#a855f7", shadow: "rgba(168,85,247,0.6)" };
+        if (count >= 4) return { stroke: "#eab308", shadow: "rgba(234,179,8,0.6)" };
+        return { stroke: "#3b82f6", shadow: "rgba(59,130,246,0.6)" };
     };
 
     const currentStyle = getColorStatus(completedCount);
@@ -79,10 +76,7 @@ export default function ReadingWidget() {
 
     return (
         <Link href="/lesen" className="block h-full w-full">
-            {/* CONTAINER: Lila/Slate Gradient */}
             <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-purple-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-purple-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
-
-                {/* HEADER */}
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-purple-200 transition-colors">Lesen</h3>
@@ -91,7 +85,6 @@ export default function ReadingWidget() {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                {/* KREIS DIAGRAMM */}
                 <div className="flex-1 flex items-center justify-center py-2">
                     <div className="relative w-32 h-32 flex-shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
@@ -114,7 +107,6 @@ export default function ReadingWidget() {
                     </div>
                 </div>
 
-                {/* FOOTER BUTTON */}
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                         ZIEL: {completedCount} / {WEEKLY_GOAL} TAGE
@@ -122,6 +114,7 @@ export default function ReadingWidget() {
 
                     <button
                         onClick={handleQuickAdd}
+                        disabled={isPending}
                         className={`
                         w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
                         ${completedCount >= WEEKLY_GOAL
