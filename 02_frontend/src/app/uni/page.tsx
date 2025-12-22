@@ -8,7 +8,7 @@ export default async function UniPage() {
   const { critical, important } = await getTasks();
 
   return (
-    // HIER GEÄNDERT: Hintergrund auf Anthrazit (#18181b) gesetzt
+    // Hintergrund: Helles Anthrazit (#27272a)
     <div className="flex h-screen bg-[#27272a] text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30">
       
       {/* SIDEBAR */}
@@ -18,11 +18,10 @@ export default async function UniPage() {
 
       <main className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
         
-        {/* BACKGROUND EFFECTS (Angepasst auf Anthrazit) */}
-        <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#18181b]">
-             {/* Dezenter Verlauf von etwas hellerem Grau oben links nach dunkel unten rechts */}
-             <div className="absolute inset-0 bg-gradient-to-br from-[#27272a] via-[#18181b] to-[#09090b]"></div>
-             {/* Der Glow-Effekt oben rechts bleibt, aber dezenter */}
+        {/* BACKGROUND EFFECTS */}
+        <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#27272a]">
+             {/* Verlauf angepasst */}
+             <div className="absolute inset-0 bg-gradient-to-br from-[#3f3f46] via-[#27272a] to-[#18181b]"></div>
              <div className="absolute top-[-10%] right-[-5%] w-[700px] h-[700px] bg-indigo-500/5 rounded-full blur-[120px] mix-blend-screen"></div>
         </div>
 
@@ -132,7 +131,8 @@ export default async function UniPage() {
                         <AlertCircle className="w-4 h-4" /> Kritisch (Deadline ≤ 7d)
                     </h3>
                     <div className="space-y-3">
-                        {critical.map(task => (
+                        {/* FIX: (task: any) hinzugefügt, um Vercel Fehler zu beheben */}
+                        {critical.map((task: any) => (
                             <form key={task.id} action={toggleTask.bind(null, task.id, !task.isDone)} className="flex items-center gap-3 group bg-[#18181b]/40 p-3 rounded-xl border border-transparent hover:border-rose-500/20 transition-all">
                                 <button className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.isDone ? 'bg-rose-500 border-rose-500' : 'border-slate-600 hover:border-rose-400'}`}>
                                     {task.isDone && <CheckCircle2 className="w-3 h-3 text-white" />}
@@ -154,7 +154,8 @@ export default async function UniPage() {
                         <Brain className="w-4 h-4" /> Wichtig (Strategie/Backlog)
                     </h3>
                     <div className="space-y-3">
-                        {important.map(task => (
+                        {/* FIX: (task: any) hinzugefügt, um Vercel Fehler zu beheben */}
+                        {important.map((task: any) => (
                             <form key={task.id} action={toggleTask.bind(null, task.id, !task.isDone)} className="flex items-center gap-3 group bg-[#18181b]/40 p-3 rounded-xl border border-transparent hover:border-blue-500/20 transition-all">
                                  <button className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.isDone ? 'bg-blue-600 border-blue-600' : 'border-slate-600 hover:border-blue-400'}`}>
                                     {task.isDone && <CheckCircle2 className="w-3 h-3 text-white" />}
