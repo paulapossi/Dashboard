@@ -29,6 +29,7 @@ interface DashboardClientProps {
     sportData?: SportData;
     readingData?: ReadingData;
     nutritionData?: NutritionData;
+    relationshipData?: { isTogether: boolean; daysTogether: number; weeklyGoal: number };
 }
 
 // INITIAL DATEN
@@ -41,7 +42,7 @@ const initialCategories = [
     { id: "mental", label: "Mental", progress: 100, color: "purple" },
 ];
 
-export default function DashboardClient({ sportData, readingData, nutritionData }: DashboardClientProps) {
+export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData }: DashboardClientProps) {
     const [categories, setCategories] = useState(initialCategories);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -171,7 +172,7 @@ export default function DashboardClient({ sportData, readingData, nutritionData 
                         {categories.map((cat) => {
                             const wrapperClass = "h-[320px] w-full";
                             if (cat.id === "uni") return <div key={cat.id} className={wrapperClass}><UniWidget /></div>;
-                            if (cat.id === "paula") return <div key={cat.id} className={wrapperClass}><RelationshipWidget /></div>;
+                            if (cat.id === "paula") return <div key={cat.id} className={wrapperClass}><RelationshipWidget initialData={relationshipData} /></div>;
                             if (cat.id === "sport") return <div key={cat.id} className={wrapperClass}><SportWidget initialData={sportData} /></div>;
                             if (cat.id === "lesen") return <div key={cat.id} className={wrapperClass}><ReadingWidget initialData={readingData} /></div>;
                             

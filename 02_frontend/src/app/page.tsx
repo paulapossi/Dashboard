@@ -2,6 +2,7 @@ import DashboardClient from "@/components/dashboard/DashboardClient";
 import { getWeeklySport } from "@/actions/sport-actions";
 import { getWeeklyReading } from "@/actions/reading-actions";
 import { getTodayNutrition } from "@/actions/nutrition-actions";
+import { getTodayRelationship, getWeeklyStats } from "@/actions/relationship-actions";
 
 // Dies ist jetzt eine Server Component (Standard in Next.js 13+ App Router)
 // Wir holen hier die Daten und geben sie an den Client-Teil weiter.
@@ -11,6 +12,8 @@ export default async function DashboardPage() {
     const sportDataRaw = await getWeeklySport();
     const readingDataRaw = await getWeeklyReading();
     const nutritionDataRaw = await getTodayNutrition();
+    const relationshipToday = await getTodayRelationship();
+    const relationshipStats = await getWeeklyStats();
 
     // 2. Daten für den Client aufbereiten
     const sportData = {
@@ -37,5 +40,18 @@ export default async function DashboardPage() {
         sweets: nutritionDataRaw.sweets,
     };
 
-    return <DashboardClient sportData={sportData} readingData={readingData} nutritionData={nutritionData} />;
+    const relationshipData = {
+        isTogether: relationshipToday.isTogether,
+        daysTogether: relationshipStats.daysTogether,
+        weeklyGoal: relationshipStats.weeklyGoal,
+    };
+
+    return (
+        <DashboardClient 
+            sportData={sportData} 
+            readingData={readingData} 
+            nutritionData={nutritionData} 
+            relationshipData={relationshipData}
+        />
+    );
 }

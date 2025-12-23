@@ -1,37 +1,53 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check } from "lucide-react";
+import { Check, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toggleTogether } from "@/actions/relationship-actions";
+import { useRouter } from "next/navigation";
 
-export default function RelationshipWidget() {
-    // --- SYNC LOGIK (Identisch zur Unterseite) ---
-    const [isTogetherToday, setIsTogetherToday] = useState(false);
+interface RelationshipWidgetProps {
+    initialData?: {
+        isTogether: boolean;
+        daysTogether: number;
+        weeklyGoal: number;
+    };
+}
+
+export default function RelationshipWidget({ initialData }: RelationshipWidgetProps) {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
+    const [isPending, setIsPending] = useState(false);
+
+    // Sync with server data
+    const isTogetherToday = initialData?.isTogether ?? false;
+    const daysTogether = initialData?.daysTogether ?? 0;
+    const weeklyGoal = initialData?.weeklyGoal ?? 4;
 
     useEffect(() => {
         setMounted(true);
-        const saved = localStorage.getItem("paula-today");
-        if (saved === "true") setIsTogetherToday(true);
     }, []);
 
-    const handleToggle = (e: MouseEvent) => {
+    const handleToggle = async (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        const newState = !isTogetherToday;
-        setIsTogetherToday(newState);
-        localStorage.setItem("paula-today", newState.toString());
+        if (isPending) return;
+
+        setIsPending(true);
+        try {
+            await toggleTogether();
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to toggle relationship status:", error);
+        } finally {
+            setIsPending(false);
+        }
     };
 
-    // Daten Logik
-    const baseDays = 2;
-    const daysTogether = isTogetherToday ? baseDays + 1 : baseDays;
-    const weeklyGoal = 4;
     const progressPercent = Math.min((daysTogether / weeklyGoal) * 100, 100);
 
-    // Farb Logik
     const getColorStatus = (days: number) => {
         if (days >= 4) return { stroke: "#e11d48", shadow: "rgba(225,29,72,0.6)" };
         if (days === 3) return { stroke: "#f472b6", shadow: "rgba(244,114,182,0.6)" };
@@ -45,27 +61,19 @@ export default function RelationshipWidget() {
 
     return (
         <Link href="/paula" className="block h-full w-full">
-            {/* CONTAINER STYLE */}
             <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-rose-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(225,29,72,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
-
-                {/* HEADER */}
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-rose-200 transition-colors">Paula</h3>
                         <p className="text-rose-200/50 text-xs mt-0.5">Gemeinsame Zeit</p>
                     </div>
-                    {/* Optional: KW Anzeige oder Menü Punkt */}
-                    <div className="text-slate-500 text-xl">⋮</div>
+                    <div className="text-rose-500/20"><Heart size={20} /></div>
                 </div>
 
-                {/* MAIN CONTENT: NUR DER KREIS (ZENTRIERT) */}
                 <div className="flex-1 flex items-center justify-center py-2">
                     <div className="relative w-32 h-32 flex-shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
-                            {/* Hintergrund Kreis */}
                             <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-
-                            {/* Fortschritts Kreis */}
                             <motion.circle
                                 cx="64" cy="64" r="56"
                                 stroke={currentColor.stroke}
@@ -78,15 +86,12 @@ export default function RelationshipWidget() {
                                 style={{ filter: `drop-shadow(0 0 15px ${currentColor.shadow})` }}
                             />
                         </svg>
-
-                        {/* Text in der Mitte */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
                         </div>
                     </div>
                 </div>
 
-                {/* FOOTER: ZIEL & BUTTON */}
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                         ZIEL: {weeklyGoal} TAGE / WOCHE
@@ -94,6 +99,7 @@ export default function RelationshipWidget() {
 
                     <button
                         onClick={handleToggle}
+                        disabled={isPending}
                         className={`
                         w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
                         ${isTogetherToday
