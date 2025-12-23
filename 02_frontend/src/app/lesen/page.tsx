@@ -18,7 +18,9 @@ export default async function LesenPage() {
 
     return (
         <div className="flex h-screen bg-[#0f1115] text-white overflow-hidden font-sans">
-            <Sidebar />
+            <div className="relative z-50 h-full flex-shrink-0">
+                <Sidebar />
+            </div>
 
             <main className="flex-1 flex flex-col h-full relative overflow-y-auto">
                 {/* BACKGROUND */}

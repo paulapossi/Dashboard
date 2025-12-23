@@ -21,10 +21,14 @@ type SportData = {
 type ReadingData = {
     day1: boolean; day2: boolean; day3: boolean; day4: boolean; day5: boolean; day6: boolean; day7: boolean;
 };
+type NutritionData = {
+    protein: boolean; vitamins: boolean; water: boolean; sweets: boolean;
+};
 
 interface DashboardClientProps {
     sportData?: SportData;
     readingData?: ReadingData;
+    nutritionData?: NutritionData;
 }
 
 // INITIAL DATEN
@@ -37,7 +41,7 @@ const initialCategories = [
     { id: "mental", label: "Mental", progress: 100, color: "purple" },
 ];
 
-export default function DashboardClient({ sportData, readingData }: DashboardClientProps) {
+export default function DashboardClient({ sportData, readingData, nutritionData }: DashboardClientProps) {
     const [categories, setCategories] = useState(initialCategories);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -169,11 +173,11 @@ export default function DashboardClient({ sportData, readingData }: DashboardCli
                             if (cat.id === "uni") return <div key={cat.id} className={wrapperClass}><UniWidget /></div>;
                             if (cat.id === "paula") return <div key={cat.id} className={wrapperClass}><RelationshipWidget /></div>;
                             if (cat.id === "sport") return <div key={cat.id} className={wrapperClass}><SportWidget initialData={sportData} /></div>;
-                            
-                            // READING WIDGET MIT SERVER DATEN
                             if (cat.id === "lesen") return <div key={cat.id} className={wrapperClass}><ReadingWidget initialData={readingData} /></div>;
                             
-                            if (cat.id === "food") return <div key={cat.id} className={wrapperClass}><NutritionWidget /></div>;
+                            // NUTRITION WIDGET MIT SERVER DATEN
+                            if (cat.id === "food") return <div key={cat.id} className={wrapperClass}><NutritionWidget initialData={nutritionData} /></div>;
+                            
                             if (cat.id === "mental") return <div key={cat.id} className={wrapperClass}><MentalWidget /></div>;
 
                             return (
