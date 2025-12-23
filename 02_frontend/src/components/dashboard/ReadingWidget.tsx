@@ -27,11 +27,12 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    // Sync with server data
+    useEffect(() => {
         if (initialData) {
             setData(initialData);
-        } else {
-            const saved = localStorage.getItem("reading-data-v1");
-            if (saved) setData(JSON.parse(saved));
         }
     }, [initialData]);
 
@@ -44,9 +45,9 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
         const nextKey = orderedKeys.find(key => !data[key]);
 
         if (nextKey) {
+            // Optimistic Update
             const newData = { ...data, [nextKey]: true };
             setData(newData);
-            localStorage.setItem("reading-data-v1", JSON.stringify(newData));
 
             setIsPending(true);
             try {
@@ -54,6 +55,7 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
                 router.refresh();
             } catch (error) {
                 console.error("Failed to toggle reading day:", error);
+                setData(data); // Rollback
             } finally {
                 setIsPending(false);
             }
@@ -76,7 +78,7 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
 
     return (
         <Link href="/lesen" className="block h-full w-full">
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-purple-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-purple-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-purple-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-purple-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-purple-200 transition-colors">Lesen</h3>

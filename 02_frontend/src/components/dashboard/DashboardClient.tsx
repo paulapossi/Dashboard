@@ -15,6 +15,7 @@ import Sidebar from "@/components/Sidebar";
 import { Search, Bell, UserCircle, Radar, ScanEye, Play, Pause, RotateCcw, Zap, Save } from "lucide-react";
 import { createBrainDump } from "@/actions/mental-actions";
 import { useRouter } from "next/navigation";
+import TiltCard from "@/components/ui/TiltCard";
 
 // Types
 type SportData = {
@@ -71,31 +72,9 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
 
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // FOCUS TIMER STATE
-    const [timerActive, setTimerActive] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(25 * 60);
+    // QUICK NOTE STATE
     const [quickNote, setQuickNote] = useState("");
     const [isSavingNote, setIsSavingNote] = useState(false);
-
-    // Timer Logik
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (timerActive && timeLeft > 0) {
-            interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-        } else if (timeLeft === 0) {
-            setTimerActive(false);
-        }
-        return () => clearInterval(interval);
-    }, [timerActive, timeLeft]);
-
-    const toggleTimer = () => setTimerActive(!timerActive);
-    const resetTimer = () => { setTimerActive(false); setTimeLeft(25 * 60); };
-
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
-    };
 
     // Quick Note speichern (Jetzt in die DB!)
     const saveNote = async (e: React.FormEvent) => {
@@ -156,61 +135,67 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     {/* HERO CARD */}
-                    <div className="xl:col-span-1 bg-gradient-to-br from-slate-900 via-[#0f1115] to-blue-950/20 rounded-[32px] p-8 border border-white/5 relative overflow-hidden flex flex-col justify-between min-h-[300px] h-full shadow-2xl group">
-                        <div className="relative z-20 flex justify-between items-start">
-                            <div>
-                                <h2 className="text-2xl font-bold flex items-center gap-3">
-                                    <Radar className="text-blue-400 animate-pulse" /> System Status
-                                </h2>
-                                <p className="text-blue-200/50 text-sm mt-1">Gesamtfortschritt & Balance</p>
-                            </div>
-                            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${averageScore >= 80 ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-orange-500/20 text-orange-400 border-orange-500/20'}`}>
-                                {averageScore >= 80 ? 'OPTIMAL' : 'AUSBALANCIEREN'}
-                            </div>
-                        </div>
-                        <div className="relative z-10 flex-1 flex items-center justify-center my-4">
-                            <div className="absolute w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_300deg,rgba(59,130,246,0.1)_360deg)] animate-[spin_4s_linear_infinite] rounded-full -top-1/2 -left-1/2 opacity-50 pointer-events-none"></div>
-                            <div className="relative w-48 h-48 flex items-center justify-center">
-                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="48" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
-                                    <circle cx="50" cy="50" r="36" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
-                                    <circle cx="50" cy="50" r="24" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
-                                </svg>
-                                <div className="relative z-20 flex flex-col items-center justify-center bg-[#0f1115] w-24 h-24 rounded-full border-2 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                                    <span className="text-3xl font-black text-white">{averageScore}%</span>
-                                    <span className="text-[10px] text-blue-400 tracking-widest uppercase">Score</span>
+                    <div className="xl:col-span-1 h-full">
+                        <TiltCard className="h-full">
+                            <div className="bg-gradient-to-br from-slate-900 via-[#0f1115] to-blue-950/20 rounded-[32px] p-8 glass-border relative overflow-hidden flex flex-col justify-between min-h-[300px] h-full shadow-2xl group">
+                                <div className="relative z-20 flex justify-between items-start">
+                                    <div>
+                                        <h2 className="text-2xl font-bold flex items-center gap-3">
+                                            <Radar className="text-blue-400 animate-pulse" /> System Status
+                                        </h2>
+                                        <p className="text-blue-200/50 text-sm mt-1">Gesamtfortschritt & Balance</p>
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${averageScore >= 80 ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-orange-500/20 text-orange-400 border-orange-500/20'}`}>
+                                        {averageScore >= 80 ? 'OPTIMAL' : 'AUSBALANCIEREN'}
+                                    </div>
+                                </div>
+                                <div className="relative z-10 flex-1 flex items-center justify-center my-4">
+                                    <div className="absolute w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_300deg,rgba(59,130,246,0.1)_360deg)] animate-[spin_4s_linear_infinite] rounded-full -top-1/2 -left-1/2 opacity-50 pointer-events-none"></div>
+                                    <div className="relative w-48 h-48 flex items-center justify-center">
+                                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="48" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
+                                            <circle cx="50" cy="50" r="36" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
+                                            <circle cx="50" cy="50" r="24" fill="none" stroke="#1e293b" strokeWidth="1" opacity="0.5" />
+                                        </svg>
+                                        <div className="relative z-20 flex flex-col items-center justify-center bg-[#0f1115] w-24 h-24 rounded-full border-2 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                                            <span className="text-3xl font-black text-white">{averageScore}%</span>
+                                            <span className="text-[10px] text-blue-400 tracking-widest uppercase">Score</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 relative z-20 bg-slate-800/30 p-3 rounded-2xl border border-white/5 backdrop-blur-sm">
+                                    <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 animate-[pulse_2s_infinite]">
+                                        <ScanEye size={20} />
+                                    </div>
+                                    <div className="text-xs text-slate-400 flex-1">
+                                        <div className="font-bold text-white mb-0.5">AI Watchtower</div>
+                                        System scan active.
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4 relative z-20 bg-slate-800/30 p-3 rounded-2xl border border-white/5 backdrop-blur-sm">
-                            <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 animate-[pulse_2s_infinite]">
-                                <ScanEye size={20} />
-                            </div>
-                            <div className="text-xs text-slate-400 flex-1">
-                                <div className="font-bold text-white mb-0.5">AI Watchtower</div>
-                                System scan active.
-                            </div>
-                        </div>
+                        </TiltCard>
                     </div>
 
                     {/* WIDGET GRID */}
                     <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {categories.map((cat) => {
                             const wrapperClass = "h-[320px] w-full";
-                            if (cat.id === "uni") return <div key={cat.id} className={wrapperClass}><UniWidget initialData={uniData} /></div>;
-                            if (cat.id === "paula") return <div key={cat.id} className={wrapperClass}><RelationshipWidget initialData={relationshipData} /></div>;
-                            if (cat.id === "sport") return <div key={cat.id} className={wrapperClass}><SportWidget initialData={sportData} /></div>;
-                            if (cat.id === "lesen") return <div key={cat.id} className={wrapperClass}><ReadingWidget initialData={readingData} /></div>;
-                            
-                            // NUTRITION WIDGET MIT SERVER DATEN
-                            if (cat.id === "food") return <div key={cat.id} className={wrapperClass}><NutritionWidget initialData={nutritionData} /></div>;
-                            
-                            if (cat.id === "mental") return <div key={cat.id} className={wrapperClass}><MentalWidget initialData={mentalData} /></div>;
+                            let content = null;
+
+                            if (cat.id === "uni") content = <UniWidget initialData={uniData} />;
+                            else if (cat.id === "paula") content = <RelationshipWidget initialData={relationshipData} />;
+                            else if (cat.id === "sport") content = <SportWidget initialData={sportData} />;
+                            else if (cat.id === "lesen") content = <ReadingWidget initialData={readingData} />;
+                            else if (cat.id === "food") content = <NutritionWidget initialData={nutritionData} />;
+                            else if (cat.id === "mental") content = <MentalWidget initialData={mentalData} />;
+                            else content = <RingCard id={cat.id} label={cat.label} progress={cat.progress} color={cat.color} onUpdate={(amount) => updateProgress(cat.id, amount)} />;
 
                             return (
-                                <div key={cat.id} className={wrapperClass}>
-                                    <RingCard id={cat.id} label={cat.label} progress={cat.progress} color={cat.color} onUpdate={(amount) => updateProgress(cat.id, amount)} />
-                                </div>
+                                <TiltCard key={cat.id} className={wrapperClass}>
+                                    <div className="h-full w-full glass-border rounded-[32px] overflow-hidden">
+                                        {content}
+                                    </div>
+                                </TiltCard>
                             );
                         })}
                     </div>
@@ -219,25 +204,6 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
                 {/* NEURAL FLOW BAR */}
                 <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-[24px] p-6 border border-white/10 flex flex-col md:flex-row gap-8 items-center justify-between shadow-2xl relative overflow-hidden">
                     <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500"></div>
-
-                    <div className="flex items-center gap-6 w-full md:w-auto">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${timerActive ? 'border-red-500 bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'border-blue-500 bg-blue-500/10 text-blue-400'}`}>
-                            <Zap size={28} className={timerActive ? "animate-pulse" : ""} />
-                        </div>
-                        <div>
-                            <div className="text-3xl font-black font-mono text-white tracking-widest">
-                                {formatTime(timeLeft)}
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={toggleTimer} className="text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white flex items-center gap-1">
-                                    {timerActive ? <><Pause size={12} /> Pause</> : <><Play size={12} /> Start Focus</>}
-                                </button>
-                                <button onClick={resetTimer} className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-white flex items-center gap-1">
-                                    <RotateCcw size={12} /> Reset
-                                </button>
-                            </div>
-                        </div>
-                    </div>
 
                     <div className="flex-1 w-full relative">
                         <form onSubmit={saveNote} className="flex gap-4">

@@ -2,11 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dein cooler Hintergrund für die ganze Seite */
+/* Global Dark Theme Background */
 body {
-    background-color: #F3F4F6;
-    /* Hellgrau */
-    color: #1F2937;
+    background-color: #0f1115;
+    color: #f8fafc;
+    overflow-x: hidden;
+}
+
+/* Subtiler Noise-Effekt Overlay */
+.noise-overlay::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.03;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    filter: contrast(150%) brightness(100%);
+}
+
+/* Glass-Border Gradient Utility */
+.glass-border {
+    position: relative;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+}
+
+.glass-border::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    border-radius: inherit;
+    pointer-events: none;
 }
 
 @keyframes gradient-move {

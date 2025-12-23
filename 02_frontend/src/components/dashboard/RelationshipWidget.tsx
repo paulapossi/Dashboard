@@ -77,7 +77,7 @@ export default function RelationshipWidget({ initialData }: RelationshipWidgetPr
 
     return (
         <Link href="/paula" className="block h-full w-full">
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-rose-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(225,29,72,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-rose-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(225,29,72,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-rose-200 transition-colors">Paula</h3>

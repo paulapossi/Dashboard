@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="de">
-            <body className={inter.className}>
+            <body className={`${inter.className} noise-overlay`}>
                 {children}
 
                 <Analytics />

@@ -21,37 +21,31 @@ interface SportWidgetProps {
 
 export default function SportWidget({ initialData }: SportWidgetProps) {
     const router = useRouter();
-    // Wenn initialData da ist, nutzen wir es. Sonst default false (und useEffect lädt ggf. localStorage als Fallback, falls wir das noch wollen)
-    // Wir priorisieren initialData.
     const [data, setData] = useState<SportData>(initialData || {
         gym1: false, gym2: false, run1: false, run2: false
     });
     
-    // Nur für Animation/Client-Mounting
     const [mounted, setMounted] = useState(false);
     const [isPending, setIsPending] = useState(false);
 
-    // 1. Daten laden (Legacy LocalStorage Fallback, falls kein initialData)
     useEffect(() => {
         setMounted(true);
-        if (!initialData) {
-            const saved = localStorage.getItem("sport-data-v1");
-            if (saved) setData(JSON.parse(saved));
-        } else {
-            // Wenn wir Props haben, updaten wir den State, falls sich die Props ändern (Re-Validation)
+    }, []);
+
+    // Sync with server data
+    useEffect(() => {
+        if (initialData) {
             setData(initialData);
         }
     }, [initialData]);
 
-    // 2. Button Logik: Die nächste offene Einheit abhaken
     const handleQuickAdd = async (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (isPending) return;
 
-        // Wir suchen den ersten Key, der false ist
-        const keys: (keyof SportData)[] = ['gym1', 'run1', 'gym2', 'run2']; // Priorität
+        const keys: (keyof SportData)[] = ['gym1', 'run1', 'gym2', 'run2'];
         const nextKey = keys.find(key => !data[key]);
 
         if (nextKey) {
@@ -59,29 +53,23 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
             const newData = { ...data, [nextKey]: true };
             setData(newData);
             
-            // Legacy Storage Update
-            localStorage.setItem("sport-data-v1", JSON.stringify(newData));
-
-            // Server Action
             setIsPending(true);
             try {
                 await toggleSportUnit(nextKey);
                 router.refresh();
             } catch (error) {
                 console.error("Failed to toggle sport unit:", error);
-                // Revert on error could be added here
+                setData(data); // Rollback
             } finally {
                 setIsPending(false);
             }
         }
     };
 
-    // Berechnung
     const completedCount = Object.values(data).filter(Boolean).length;
     const WEEKLY_GOAL = 4;
     const progressPercent = (completedCount / WEEKLY_GOAL) * 100;
 
-    // Farben
     const getColorStatus = (count: number) => {
         if (count >= 4) return { stroke: "#22c55e", shadow: "rgba(34,197,94,0.6)" };
         if (count === 3) return { stroke: "#06b6d4", shadow: "rgba(6,182,212,0.6)" };
@@ -95,9 +83,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
 
     return (
         <Link href="/sport" className="block h-full w-full">
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-blue-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-blue-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
-
-                {/* HEADER */}
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-blue-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-blue-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-blue-200 transition-colors">Sport</h3>
@@ -106,7 +92,6 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                {/* MAIN CONTENT */}
                 <div className="flex-1 flex items-center justify-center py-2">
                     <div className="relative w-32 h-32 flex-shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
@@ -129,7 +114,6 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     </div>
                 </div>
 
-                {/* FOOTER */}
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                         ZIEL: {completedCount} / {WEEKLY_GOAL}

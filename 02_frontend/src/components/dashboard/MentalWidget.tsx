@@ -72,11 +72,13 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
 
     if (!mounted) return null;
 
-    return (
-        <div onClick={handleCardClick} className="block h-full w-full cursor-pointer">
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/80 to-purple-900/20 border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-purple-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transition-transform duration-300 will-change-transform">
+        return (
 
-                <div className="flex justify-between items-start pointer-events-none">
+            <div onClick={handleCardClick} className="block h-full w-full cursor-pointer">
+
+                <div className="h-full w-full bg-gradient-to-br from-slate-900/80 to-purple-900/20 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-purple-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transition-transform duration-300 will-change-transform">
+
+                    <div className="flex justify-between items-start pointer-events-none">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-purple-200 transition-colors">Mental</h3>
                         <p className="text-purple-200/50 text-xs mt-0.5">Me Time & Reflect</p>

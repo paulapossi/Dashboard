@@ -5,27 +5,9 @@ import { getTodayNutrition } from "@/actions/nutrition-actions";
 import { getTodayRelationship, getWeeklyStats } from "@/actions/relationship-actions";
 import { getMentalData } from "@/actions/mental-actions";
 import { getWeeklyUniStats } from "@/actions/uni-actions";
-import { unstable_cache } from "next/cache";
-
-// CACHED DATA FETCHING (Optimization 4)
-const getCachedDashboardData = unstable_cache(
-    async () => {
-        return Promise.all([
-            getWeeklySport(),
-            getWeeklyReading(),
-            getTodayNutrition(),
-            getTodayRelationship(),
-            getWeeklyStats(),
-            getMentalData(),
-            getWeeklyUniStats()
-        ]);
-    },
-    ['dashboard-data'],
-    { revalidate: 60, tags: ['dashboard'] } // Cache for 1 minute
-);
 
 export default async function DashboardPage() {
-    // 1. Alle Daten parallel laden (mit Cache)
+    // 1. Alle Daten parallel laden (Ohne Cache, um Sync-Probleme zu vermeiden)
     const [
         sportDataRaw,
         readingDataRaw,
@@ -34,7 +16,15 @@ export default async function DashboardPage() {
         relationshipStats,
         mentalData,
         uniStats
-    ] = await getCachedDashboardData();
+    ] = await Promise.all([
+        getWeeklySport(),
+        getWeeklyReading(),
+        getTodayNutrition(),
+        getTodayRelationship(),
+        getWeeklyStats(),
+        getMentalData(),
+        getWeeklyUniStats()
+    ]);
 
     // 2. Daten für den Client aufbereiten
     const sportData = {
