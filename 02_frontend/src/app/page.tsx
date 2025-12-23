@@ -4,24 +4,37 @@ import { getWeeklyReading } from "@/actions/reading-actions";
 import { getTodayNutrition } from "@/actions/nutrition-actions";
 import { getTodayRelationship, getWeeklyStats } from "@/actions/relationship-actions";
 import { getMentalData } from "@/actions/mental-actions";
+import { getWeeklyUniStats } from "@/actions/uni-actions";
+import { unstable_cache } from "next/cache";
+
+// CACHED DATA FETCHING (Optimization 4)
+const getCachedDashboardData = unstable_cache(
+    async () => {
+        return Promise.all([
+            getWeeklySport(),
+            getWeeklyReading(),
+            getTodayNutrition(),
+            getTodayRelationship(),
+            getWeeklyStats(),
+            getMentalData(),
+            getWeeklyUniStats()
+        ]);
+    },
+    ['dashboard-data'],
+    { revalidate: 60, tags: ['dashboard'] } // Cache for 1 minute
+);
 
 export default async function DashboardPage() {
-    // 1. Alle Daten parallel aus der DB laden
+    // 1. Alle Daten parallel laden (mit Cache)
     const [
         sportDataRaw,
         readingDataRaw,
         nutritionDataRaw,
         relationshipToday,
         relationshipStats,
-        mentalData
-    ] = await Promise.all([
-        getWeeklySport(),
-        getWeeklyReading(),
-        getTodayNutrition(),
-        getTodayRelationship(),
-        getWeeklyStats(),
-        getMentalData()
-    ]);
+        mentalData,
+        uniStats
+    ] = await getCachedDashboardData();
 
     // 2. Daten für den Client aufbereiten
     const sportData = {
@@ -56,7 +69,12 @@ export default async function DashboardPage() {
 
     const mentalDataClean = {
         meTimeHours: mentalData.meTimeHours,
-        weeklyGoal: 5 // Wir können das hier zentral steuern
+        weeklyGoal: 5
+    };
+
+    const uniDataClean = {
+        sessions: uniStats.sessions,
+        weeklyGoal: uniStats.weeklyGoal
     };
 
     return (
@@ -66,6 +84,7 @@ export default async function DashboardPage() {
             nutritionData={nutritionData} 
             relationshipData={relationshipData}
             mentalData={mentalDataClean}
+            uniData={uniDataClean}
         />
     );
 }

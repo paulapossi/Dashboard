@@ -4,58 +4,68 @@ import { useState, useEffect, MouseEvent } from "react";
 import { Check, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { quickLogUniSession } from "@/actions/uni-actions";
 
-export default function UniWidget() {
-    const router = useRouter();
-    const [sessions, setSessions] = useState(0);
-    const [mounted, setMounted] = useState(false);
-
-    // Wochenziel: 7 Tage lernen
-    const WEEKLY_GOAL = 7;
-
-    // Laden
-    const loadData = () => {
-        const saved = localStorage.getItem("uni-data-v1");
-        if (saved) {
-            // Wir speichern hier einfach die Anzahl der Sessions
-            setSessions(parseInt(saved));
-        }
+interface UniWidgetProps {
+    initialData?: {
+        sessions: number;
+        weeklyGoal: number;
     };
+}
+
+export default function UniWidget({ initialData }: UniWidgetProps) {
+    const router = useRouter();
+    const [mounted, setMounted] = useState(false);
+    const [isPending, setIsPending] = useState(false);
+
+    // Optimistic state
+    const [sessions, setSessions] = useState(initialData?.sessions ?? 0);
+    const WEEKLY_GOAL = initialData?.weeklyGoal ?? 7;
 
     useEffect(() => {
         setMounted(true);
-        loadData();
-        window.addEventListener("storage", loadData);
-        return () => window.removeEventListener("storage", loadData);
     }, []);
 
-    // Button: Session hinzufügen
-    const handleAddSession = (e: MouseEvent) => {
+    // Sync with server data
+    useEffect(() => {
+        if (initialData) {
+            setSessions(initialData.sessions);
+        }
+    }, [initialData]);
+
+    const handleAddSession = async (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        // Logik: Zähler erhöhen (max 5, dann Reset auf 0 zum Testen oder Bleiben)
-        // Wir machen es so: Wenn Ziel erreicht, bleibt es voll. Reset müsste man manuell machen (oder wir bauen das später).
-        const newCount = sessions < WEEKLY_GOAL ? sessions + 1 : 0;
+        if (isPending) return;
 
-        setSessions(newCount);
-        localStorage.setItem("uni-data-v1", newCount.toString());
-        window.dispatchEvent(new Event("storage"));
+        // Optimistic Update
+        const nextSessions = sessions + 1;
+        setSessions(nextSessions);
+
+        setIsPending(true);
+        try {
+            await quickLogUniSession();
+            router.refresh();
+        } catch (error) {
+            // Rollback
+            setSessions(sessions);
+            console.error("Failed to log uni session:", error);
+        } finally {
+            setIsPending(false);
+        }
     };
 
-    // Klick auf Karte -> zur Unterseite
     const handleCardClick = () => {
         router.push("/uni");
     };
 
-    // Berechnung
-    const progressPercent = (sessions / WEEKLY_GOAL) * 100;
+    const progressPercent = Math.min((sessions / WEEKLY_GOAL) * 100, 100);
 
-    // Farben (Indigo Theme)
     const getColorStatus = (count: number) => {
-        if (count >= 5) return { stroke: "#6366f1", shadow: "rgba(99,102,241,0.6)" }; // Indigo 500 (Ziel)
-        if (count >= 3) return { stroke: "#818cf8", shadow: "rgba(129,140,248,0.6)" }; // Indigo 400
-        return { stroke: "#4f46e5", shadow: "rgba(79,70,229,0.4)" }; // Indigo 600
+        if (count >= 5) return { stroke: "#6366f1", shadow: "rgba(99,102,241,0.6)" };
+        if (count >= 3) return { stroke: "#818cf8", shadow: "rgba(129,140,248,0.6)" };
+        return { stroke: "#4f46e5", shadow: "rgba(79,70,229,0.4)" };
     };
 
     const currentStyle = getColorStatus(sessions);
@@ -63,13 +73,9 @@ export default function UniWidget() {
     if (!mounted) return null;
 
     return (
-        <div
-            onClick={handleCardClick}
-            className="block h-full w-full cursor-pointer"
-        >
+        <div onClick={handleCardClick} className="block h-full w-full cursor-pointer">
             <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] transition-transform duration-300 will-change-transform">
 
-                {/* HEADER */}
                 <div className="flex justify-between items-start pointer-events-none">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-indigo-200 transition-colors">Uni</h3>
@@ -78,14 +84,10 @@ export default function UniWidget() {
                     <div className="text-indigo-500/20"><GraduationCap size={20} /></div>
                 </div>
 
-                {/* KREIS DIAGRAMM */}
                 <div className="flex-1 flex items-center justify-center py-2 pointer-events-none">
                     <div className="relative w-32 h-32 flex-shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
-                            {/* Hintergrund */}
                             <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-
-                            {/* Fortschritt */}
                             <motion.circle
                                 cx="64" cy="64" r="56"
                                 stroke={currentStyle.stroke}
@@ -104,7 +106,6 @@ export default function UniWidget() {
                     </div>
                 </div>
 
-                {/* FOOTER BUTTON */}
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest pointer-events-none">
                         WOCHE: {sessions} / {WEEKLY_GOAL} SESSIONS
@@ -112,6 +113,7 @@ export default function UniWidget() {
 
                     <button
                         onClick={handleAddSession}
+                        disabled={isPending}
                         className={`
                         w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
                         ${sessions >= WEEKLY_GOAL

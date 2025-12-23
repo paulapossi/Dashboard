@@ -3,6 +3,8 @@
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 
+import { startOfWeek } from "date-fns"
+
 // --- 1. LOG LADEN ODER ERSTELLEN ---
 export async function getTodayLog() {
   const today = new Date()
@@ -24,6 +26,60 @@ export async function getTodayLog() {
   }
 
   return log
+}
+
+export async function getWeeklyUniStats() {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    
+    try {
+        const entries = await db.dailyLog.findMany({
+            where: {
+                date: { gte: weekStart },
+                actualDeepWorkMinutes: { gt: 0 }
+            }
+        });
+        
+        return {
+            sessions: entries.length,
+            weeklyGoal: 7
+        };
+    } catch (error) {
+        return { sessions: 0, weeklyGoal: 7 };
+    }
+}
+
+// Bessere Action zum schnellen Loggen einer Session (z.B. +1h)
+export async function quickLogUniSession() {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    try {
+        const existing = await db.dailyLog.findFirst({
+            where: { date: { gte: today } }
+        });
+        
+        if (existing) {
+            await db.dailyLog.update({
+                where: { id: existing.id },
+                data: { actualDeepWorkMinutes: (existing.actualDeepWorkMinutes || 0) + 60 }
+            });
+        } else {
+            await db.dailyLog.create({
+                data: {
+                    date: new Date(),
+                    actualDeepWorkMinutes: 60,
+                    goalDeepWorkMinutes: 120 // Default Goal
+                }
+            });
+        }
+        
+        revalidatePath("/uni");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error };
+    }
 }
 
 // --- 2. LOG UPDATEN (DAS HERZSTÜCK) ---

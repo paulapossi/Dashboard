@@ -13,6 +13,8 @@ import MentalWidget from "@/components/dashboard/MentalWidget";
 
 import Sidebar from "@/components/Sidebar";
 import { Search, Bell, UserCircle, Radar, ScanEye, Play, Pause, RotateCcw, Zap, Save } from "lucide-react";
+import { createBrainDump } from "@/actions/mental-actions";
+import { useRouter } from "next/navigation";
 
 // Types
 type SportData = {
@@ -31,26 +33,49 @@ interface DashboardClientProps {
     nutritionData?: NutritionData;
     relationshipData?: { isTogether: boolean; daysTogether: number; weeklyGoal: number };
     mentalData?: { meTimeHours: number; weeklyGoal: number };
+    uniData?: { sessions: number; weeklyGoal: number };
 }
 
-export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData, mentalData }: DashboardClientProps) {
-    // Initial categories with data from props if available
-    const initialCategories = [
-        { id: "uni", label: "Uni", progress: 78, color: "indigo" },
-        { id: "sport", label: "Sport", progress: sportData ? Math.round((Object.values(sportData).filter(Boolean).length / 4) * 100) : 92, color: "teal" },
-        { id: "lesen", label: "Lesen", progress: readingData ? Math.round((Object.values(readingData).filter(Boolean).length / 7) * 100) : 95, color: "yellow" },
-        { id: "food", label: "Ernährung", progress: nutritionData ? Math.round((Object.values(nutritionData).filter(Boolean).length / 4) * 100) : 88, color: "green" },
-        { id: "paula", label: "Paula", progress: relationshipData ? Math.round((relationshipData.daysTogether / relationshipData.weeklyGoal) * 100) : 65, color: "red" },
-        { id: "mental", label: "Mental", progress: mentalData ? Math.round((mentalData.meTimeHours / mentalData.weeklyGoal) * 100) : 100, color: "purple" },
-    ];
+export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData, mentalData, uniData }: DashboardClientProps) {
+    const router = useRouter();
+    
+    // Calculation functions for progress
+    const getSportProgress = () => sportData ? Math.round((Object.values(sportData).filter(Boolean).length / 4) * 100) : 0;
+    const getReadingProgress = () => readingData ? Math.round((Object.values(readingData).filter(Boolean).length / 7) * 100) : 0;
+    const getNutritionProgress = () => nutritionData ? Math.round((Object.values(nutritionData).filter(Boolean).length / 4) * 100) : 0;
+    const getRelationshipProgress = () => relationshipData ? Math.round((relationshipData.daysTogether / relationshipData.weeklyGoal) * 100) : 0;
+    const getMentalProgress = () => mentalData ? Math.round((mentalData.meTimeHours / mentalData.weeklyGoal) * 100) : 0;
+    const getUniProgress = () => uniData ? Math.round((uniData.sessions / uniData.weeklyGoal) * 100) : 0;
 
-    const [categories, setCategories] = useState(initialCategories);
+    // Categories state
+    const [categories, setCategories] = useState([
+        { id: "uni", label: "Uni", progress: getUniProgress(), color: "indigo" },
+        { id: "sport", label: "Sport", progress: getSportProgress(), color: "teal" },
+        { id: "lesen", label: "Lesen", progress: getReadingProgress(), color: "yellow" },
+        { id: "food", label: "Ernährung", progress: getNutritionProgress(), color: "green" },
+        { id: "paula", label: "Paula", progress: getRelationshipProgress(), color: "red" },
+        { id: "mental", label: "Mental", progress: getMentalProgress(), color: "purple" },
+    ]);
+
+    // Sync categories when props change
+    useEffect(() => {
+        setCategories([
+            { id: "uni", label: "Uni", progress: getUniProgress(), color: "indigo" },
+            { id: "sport", label: "Sport", progress: getSportProgress(), color: "teal" },
+            { id: "lesen", label: "Lesen", progress: getReadingProgress(), color: "yellow" },
+            { id: "food", label: "Ernährung", progress: getNutritionProgress(), color: "green" },
+            { id: "paula", label: "Paula", progress: getRelationshipProgress(), color: "red" },
+            { id: "mental", label: "Mental", progress: getMentalProgress(), color: "purple" },
+        ]);
+    }, [sportData, readingData, nutritionData, relationshipData, mentalData, uniData]);
+
     const [isLoaded, setIsLoaded] = useState(false);
 
     // FOCUS TIMER STATE
     const [timerActive, setTimerActive] = useState(false);
     const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [quickNote, setQuickNote] = useState("");
+    const [isSavingNote, setIsSavingNote] = useState(false);
 
     // Timer Logik
     useEffect(() => {
@@ -72,32 +97,32 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
-    // Quick Note speichern
-    const saveNote = (e: React.FormEvent) => {
+    // Quick Note speichern (Jetzt in die DB!)
+    const saveNote = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!quickNote.trim()) return;
-        const existing = JSON.parse(localStorage.getItem("brain-dump") || "[]");
-        localStorage.setItem("brain-dump", JSON.stringify([...existing, { id: Date.now(), text: quickNote }]));
-        setQuickNote("");
-        alert("Gedanke im 'Mental'-Speicher abgelegt!");
+        if (!quickNote.trim() || isSavingNote) return;
+
+        setIsSavingNote(true);
+        try {
+            await createBrainDump(quickNote);
+            setQuickNote("");
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to save quick note:", error);
+        } finally {
+            setIsSavingNote(false);
+        }
     };
 
     const totalProgress = categories.reduce((acc, cat) => acc + cat.progress, 0);
     const averageScore = Math.round(totalProgress / categories.length);
 
     useEffect(() => {
-        const savedData = localStorage.getItem("life-os-data");
-        if (savedData) {
-            try { setCategories(JSON.parse(savedData)); } catch (e) { console.error(e); }
-        }
         setIsLoaded(true);
     }, []);
 
-    useEffect(() => {
-        if (isLoaded) localStorage.setItem("life-os-data", JSON.stringify(categories));
-    }, [categories, isLoaded]);
-
     const updateProgress = (id: string, amount: number) => {
+        // Only for fallback rings that aren't widgets yet
         setCategories((prev) => prev.map((cat) => {
             if (cat.id === id) return { ...cat, progress: Math.max(0, Math.min(100, cat.progress + amount)) };
             return cat;
@@ -172,7 +197,7 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
                     <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {categories.map((cat) => {
                             const wrapperClass = "h-[320px] w-full";
-                            if (cat.id === "uni") return <div key={cat.id} className={wrapperClass}><UniWidget /></div>;
+                            if (cat.id === "uni") return <div key={cat.id} className={wrapperClass}><UniWidget initialData={uniData} /></div>;
                             if (cat.id === "paula") return <div key={cat.id} className={wrapperClass}><RelationshipWidget initialData={relationshipData} /></div>;
                             if (cat.id === "sport") return <div key={cat.id} className={wrapperClass}><SportWidget initialData={sportData} /></div>;
                             if (cat.id === "lesen") return <div key={cat.id} className={wrapperClass}><ReadingWidget initialData={readingData} /></div>;
@@ -225,7 +250,7 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
                                     className="w-full bg-slate-900/80 border border-white/10 rounded-xl py-4 pl-5 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-all"
                                 />
                             </div>
-                            <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white p-4 rounded-xl border border-white/5 transition-all">
+                            <button type="submit" disabled={isSavingNote} className="bg-slate-800 hover:bg-slate-700 text-white p-4 rounded-xl border border-white/5 transition-all disabled:opacity-50">
                                 <Save size={20} />
                             </button>
                         </form>
