@@ -38,11 +38,27 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
     const [isPending, setIsPending] = useState(false);
     const [selectedLog, setSelectedLog] = useState<HistoryEntry | null>(null);
 
+    // Optimistic States
+    const [isTogether, setIsTogether] = useState(todayData.isTogether);
+    const [optimisticDays, setOptimisticDays] = useState(weeklyStats.daysTogether);
+
     // Local form state
     const [qualityTime, setQualityTime] = useState<boolean>(todayData.qualityTime);
     const [communication, setCommunication] = useState<boolean>(todayData.communication);
     const [gratitude, setGratitude] = useState(todayData.gratitude || "");
     const [isSaved, setIsSaved] = useState(false);
+
+    // Sync with server data
+    useEffect(() => {
+        setIsTogether(todayData.isTogether);
+        setQualityTime(todayData.qualityTime);
+        setCommunication(todayData.communication);
+        setGratitude(todayData.gratitude || "");
+    }, [todayData]);
+
+    useEffect(() => {
+        setOptimisticDays(weeklyStats.daysTogether);
+    }, [weeklyStats]);
 
     useEffect(() => {
         const calculateTime = () => {
@@ -65,11 +81,19 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
     }, []);
 
     const handleToggleTogether = async () => {
+        // Optimistic Update
+        const nextState = !isTogether;
+        setIsTogether(nextState);
+        setOptimisticDays(prev => nextState ? prev + 1 : Math.max(0, prev - 1));
+
         setIsPending(true);
         try {
             await toggleTogether();
             router.refresh();
         } catch (error) {
+            // Rollback
+            setIsTogether(!nextState);
+            setOptimisticDays(prev => !nextState ? prev + 1 : Math.max(0, prev - 1));
             console.error(error);
         } finally {
             setIsPending(false);
@@ -79,26 +103,28 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
     const handleSaveCheckIn = async () => {
         if (!gratitude.trim()) return;
         setIsPending(true);
+        setIsSaved(true); // Immediate visual feedback
+        
         try {
             await saveCheckIn({ qualityTime, communication, gratitude });
-            setIsSaved(true);
             setTimeout(() => setIsSaved(false), 2000);
             router.refresh();
         } catch (error) {
+            setIsSaved(false);
             console.error(error);
         } finally {
             setIsPending(false);
         }
     };
 
-    const progressPercent = Math.min((weeklyStats.daysTogether / weeklyStats.weeklyGoal) * 100, 100);
+    const progressPercent = Math.min((optimisticDays / weeklyStats.weeklyGoal) * 100, 100);
 
     const getColorStatus = (days: number) => {
         if (days >= 4) return { stroke: "#e11d48", shadow: "rgba(225,29,72,0.6)", label: "Ziel erreicht ❤️" };
         if (days === 3) return { stroke: "#f472b6", shadow: "rgba(244,114,182,0.6)", label: "Fast da" };
         return { stroke: "#94a3b8", shadow: "rgba(148,163,184,0.4)", label: "Geht so" };
     };
-    const currentColor = getColorStatus(weeklyStats.daysTogether);
+    const currentColor = getColorStatus(optimisticDays);
 
     return (
         <div className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
@@ -127,22 +153,18 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
                     {/* Timer Card */}
                     <div className="relative h-[300px] rounded-[32px] overflow-hidden group shadow-2xl border border-white/10">
                         <Image src="/couple.jpeg" alt="Couple" fill className="object-cover object-[50%_25%] transition-transform duration-1000 group-hover:scale-105" priority />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-8">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                                <p className="text-rose-200 text-sm font-bold uppercase tracking-widest">
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-black/40 to-black/90"></div>
+                        <div className="absolute bottom-0 right-0 p-8 text-right">
+                            <div className="flex items-center justify-end gap-2 mb-1">
+                                <Star className="text-yellow-400 fill-yellow-400" size={12} />
+                                <p className="text-rose-200 text-[10px] font-bold uppercase tracking-[0.2em]">
                                     {isFuture ? "The Beginning" : "Our Journey"}
                                 </p>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-2xl">
-                                {timeTogether.months} <span className="text-xl font-medium text-rose-300">Months</span>, {timeTogether.days} <span className="text-xl font-medium text-rose-300">Days</span>
+                            <h2 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-2xl">
+                                {timeTogether.months} <span className="text-sm font-medium text-rose-300">Months</span>, {timeTogether.days} <span className="text-sm font-medium text-rose-300">Days</span>
                             </h2>
-                            <div className="flex items-center gap-4 mt-6">
-                                <div className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10 text-white/80 text-xs font-bold">
-                                    Est. June 15, 2025
-                                </div>
-                            </div>
+                            <p className="text-white/40 text-[10px] mt-2 font-medium">Est. June 15, 2025</p>
                         </div>
                     </div>
 
@@ -172,7 +194,7 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
                                     />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-4xl font-black text-white">{weeklyStats.daysTogether}</span>
+                                    <span className="text-4xl font-black text-white">{optimisticDays}</span>
                                     <span className="text-[10px] text-rose-300 font-bold uppercase tracking-tighter">Days / Week</span>
                                 </div>
                             </div>
@@ -185,9 +207,9 @@ export default function PaulaClient({ todayData, history, weeklyStats }: PaulaCl
                                 <button 
                                     onClick={handleToggleTogether} 
                                     disabled={isPending}
-                                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg ${todayData.isTogether ? "bg-rose-600 text-white shadow-rose-600/30" : "bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700 hover:text-white"}`}
+                                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg ${isTogether ? "bg-rose-600 text-white shadow-rose-600/30" : "bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700 hover:text-white"}`}
                                 >
-                                    {todayData.isTogether ? <><Check size={18} strokeWidth={4} /> Day Logged</> : <><Plus size={18} /> Log Today</>}
+                                    {isTogether ? <><Check size={18} strokeWidth={4} /> Day Logged</> : <><Plus size={18} /> Log Today</>}
                                 </button>
                             </div>
                         </div>

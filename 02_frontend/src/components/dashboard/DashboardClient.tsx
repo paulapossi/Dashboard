@@ -30,19 +30,20 @@ interface DashboardClientProps {
     readingData?: ReadingData;
     nutritionData?: NutritionData;
     relationshipData?: { isTogether: boolean; daysTogether: number; weeklyGoal: number };
+    mentalData?: { meTimeHours: number; weeklyGoal: number };
 }
 
-// INITIAL DATEN
-const initialCategories = [
-    { id: "uni", label: "Uni", progress: 78, color: "indigo" },
-    { id: "sport", label: "Sport", progress: 92, color: "teal" },
-    { id: "lesen", label: "Lesen", progress: 95, color: "yellow" },
-    { id: "food", label: "Ernährung", progress: 88, color: "green" },
-    { id: "paula", label: "Paula", progress: 65, color: "red" },
-    { id: "mental", label: "Mental", progress: 100, color: "purple" },
-];
+export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData, mentalData }: DashboardClientProps) {
+    // Initial categories with data from props if available
+    const initialCategories = [
+        { id: "uni", label: "Uni", progress: 78, color: "indigo" },
+        { id: "sport", label: "Sport", progress: sportData ? Math.round((Object.values(sportData).filter(Boolean).length / 4) * 100) : 92, color: "teal" },
+        { id: "lesen", label: "Lesen", progress: readingData ? Math.round((Object.values(readingData).filter(Boolean).length / 7) * 100) : 95, color: "yellow" },
+        { id: "food", label: "Ernährung", progress: nutritionData ? Math.round((Object.values(nutritionData).filter(Boolean).length / 4) * 100) : 88, color: "green" },
+        { id: "paula", label: "Paula", progress: relationshipData ? Math.round((relationshipData.daysTogether / relationshipData.weeklyGoal) * 100) : 65, color: "red" },
+        { id: "mental", label: "Mental", progress: mentalData ? Math.round((mentalData.meTimeHours / mentalData.weeklyGoal) * 100) : 100, color: "purple" },
+    ];
 
-export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData }: DashboardClientProps) {
     const [categories, setCategories] = useState(initialCategories);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -179,7 +180,7 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
                             // NUTRITION WIDGET MIT SERVER DATEN
                             if (cat.id === "food") return <div key={cat.id} className={wrapperClass}><NutritionWidget initialData={nutritionData} /></div>;
                             
-                            if (cat.id === "mental") return <div key={cat.id} className={wrapperClass}><MentalWidget /></div>;
+                            if (cat.id === "mental") return <div key={cat.id} className={wrapperClass}><MentalWidget initialData={mentalData} /></div>;
 
                             return (
                                 <div key={cat.id} className={wrapperClass}>

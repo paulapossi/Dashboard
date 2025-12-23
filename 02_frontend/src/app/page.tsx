@@ -3,17 +3,25 @@ import { getWeeklySport } from "@/actions/sport-actions";
 import { getWeeklyReading } from "@/actions/reading-actions";
 import { getTodayNutrition } from "@/actions/nutrition-actions";
 import { getTodayRelationship, getWeeklyStats } from "@/actions/relationship-actions";
-
-// Dies ist jetzt eine Server Component (Standard in Next.js 13+ App Router)
-// Wir holen hier die Daten und geben sie an den Client-Teil weiter.
+import { getMentalData } from "@/actions/mental-actions";
 
 export default async function DashboardPage() {
-    // 1. Daten laden
-    const sportDataRaw = await getWeeklySport();
-    const readingDataRaw = await getWeeklyReading();
-    const nutritionDataRaw = await getTodayNutrition();
-    const relationshipToday = await getTodayRelationship();
-    const relationshipStats = await getWeeklyStats();
+    // 1. Alle Daten parallel aus der DB laden
+    const [
+        sportDataRaw,
+        readingDataRaw,
+        nutritionDataRaw,
+        relationshipToday,
+        relationshipStats,
+        mentalData
+    ] = await Promise.all([
+        getWeeklySport(),
+        getWeeklyReading(),
+        getTodayNutrition(),
+        getTodayRelationship(),
+        getWeeklyStats(),
+        getMentalData()
+    ]);
 
     // 2. Daten für den Client aufbereiten
     const sportData = {
@@ -46,12 +54,18 @@ export default async function DashboardPage() {
         weeklyGoal: relationshipStats.weeklyGoal,
     };
 
+    const mentalDataClean = {
+        meTimeHours: mentalData.meTimeHours,
+        weeklyGoal: 5 // Wir können das hier zentral steuern
+    };
+
     return (
         <DashboardClient 
             sportData={sportData} 
             readingData={readingData} 
             nutritionData={nutritionData} 
             relationshipData={relationshipData}
+            mentalData={mentalDataClean}
         />
     );
 }

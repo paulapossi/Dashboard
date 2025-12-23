@@ -20,14 +20,22 @@ export default function RelationshipWidget({ initialData }: RelationshipWidgetPr
     const [mounted, setMounted] = useState(false);
     const [isPending, setIsPending] = useState(false);
 
-    // Sync with server data
-    const isTogetherToday = initialData?.isTogether ?? false;
-    const daysTogether = initialData?.daysTogether ?? 0;
+    // Optimistic state
+    const [isTogetherToday, setIsTogetherToday] = useState(initialData?.isTogether ?? false);
+    const [daysTogether, setDaysTogether] = useState(initialData?.daysTogether ?? 0);
     const weeklyGoal = initialData?.weeklyGoal ?? 4;
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Sync with server data when it changes
+    useEffect(() => {
+        if (initialData) {
+            setIsTogetherToday(initialData.isTogether);
+            setDaysTogether(initialData.daysTogether);
+        }
+    }, [initialData]);
 
     const handleToggle = async (e: MouseEvent) => {
         e.preventDefault();
@@ -35,11 +43,19 @@ export default function RelationshipWidget({ initialData }: RelationshipWidgetPr
 
         if (isPending) return;
 
+        // Optimistic Update
+        const nextState = !isTogetherToday;
+        setIsTogetherToday(nextState);
+        setDaysTogether(prev => nextState ? prev + 1 : Math.max(0, prev - 1));
+
         setIsPending(true);
         try {
             await toggleTogether();
             router.refresh();
         } catch (error) {
+            // Rollback on error
+            setIsTogetherToday(!nextState);
+            setDaysTogether(prev => !nextState ? prev + 1 : Math.max(0, prev - 1));
             console.error("Failed to toggle relationship status:", error);
         } finally {
             setIsPending(false);
