@@ -62,3 +62,32 @@ export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "wate
     return { success: false, error };
   }
 }
+
+export async function getNutritionHistory() {
+  const today = startOfDay(new Date());
+  // Letzte 7 Tage berechnen (exklusive heute oder inklusive? Meistens inklusive heute rückblickend)
+  // Wir nehmen die letzten 7 Tage *vor* heute für die History, oder einfach die letzten 7 Einträge.
+  // Besser: Einen expliziten Range abfragen.
+  
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6); // Heute + 6 Tage zurück = 7 Tage range
+
+  try {
+    const history = await db.dailyNutrition.findMany({
+      where: {
+        date: {
+          gte: sevenDaysAgo,
+          lte: today,
+        }
+      },
+      orderBy: {
+        date: 'asc'
+      }
+    });
+    
+    return history;
+  } catch (error) {
+    console.error("Error fetching nutrition history:", error);
+    return [];
+  }
+}

@@ -32,9 +32,6 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
         setMounted(true);
         if (initialData) {
             setData(initialData);
-        } else {
-            const saved = localStorage.getItem("nutrition-data-v1");
-            if (saved) setData(JSON.parse(saved));
         }
     }, [initialData]);
 
@@ -49,7 +46,7 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
         if (nextKey) {
             const newData = { ...data, [nextKey]: true };
             setData(newData);
-            localStorage.setItem("nutrition-data-v1", JSON.stringify(newData));
+            // Optimistic update - no localStorage anymore
 
             setIsPending(true);
             try {
@@ -57,6 +54,7 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                 router.refresh();
             } catch (error) {
                 console.error("Failed to toggle nutrition habit:", error);
+                // Rollback could be handled here if needed, but router.refresh usually fixes state
             } finally {
                 setIsPending(false);
             }

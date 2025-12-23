@@ -13,11 +13,20 @@ type NutritionData = {
     sweets: boolean;
 };
 
+type HistoryEntry = {
+    date: Date;
+    protein: boolean;
+    vitamins: boolean;
+    water: boolean;
+    sweets: boolean;
+};
+
 interface NutritionClientProps {
     initialData: NutritionData;
+    history: HistoryEntry[];
 }
 
-export default function NutritionClient({ initialData }: NutritionClientProps) {
+export default function NutritionClient({ initialData, history }: NutritionClientProps) {
     const router = useRouter();
     const [data, setData] = useState<NutritionData>(initialData);
     const [isPending, setIsPending] = useState(false);
@@ -48,12 +57,49 @@ export default function NutritionClient({ initialData }: NutritionClientProps) {
     const progressPercent = (completedCount / DAILY_GOAL) * 100;
 
     const getProgressColor = (count: number) => {
-        if (count >= 4) return { stroke: "#10b981", shadow: "rgba(16,185,129,0.6)", label: "Clean & Strong 🌱" };
-        if (count === 3) return { stroke: "#34d399", shadow: "rgba(52,211,153,0.6)", label: "Fast perfekt" };
-        return { stroke: "#059669", shadow: "rgba(5,150,105,0.4)", label: "Fuel your body" };
+        if (count >= 4) return { stroke: "#10b981", shadow: "rgba(16,185,129,0.6)", label: "Clean & Strong 🌱", bg: "bg-emerald-500" };
+        if (count === 3) return { stroke: "#34d399", shadow: "rgba(52,211,153,0.6)", label: "Fast perfekt", bg: "bg-emerald-400" };
+        if (count > 0) return { stroke: "#059669", shadow: "rgba(5,150,105,0.4)", label: "Fuel your body", bg: "bg-emerald-900/50" };
+        return { stroke: "#1e293b", shadow: "transparent", label: "Start your day", bg: "bg-slate-800" };
     };
 
     const currentStatus = getProgressColor(completedCount);
+
+    // Prepare History Data (Last 7 Days)
+    const getLast7Days = () => {
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            d.setHours(0, 0, 0, 0);
+            
+            // Find match in history prop
+            // Note: History dates from Prisma come as Date objects if we used a server component directly, 
+            // but passing from server to client over props serializes dates to strings often. 
+            // However, Next.js Server Components pass Date objects correctly to Client Components within the same app render cycle usually, 
+            // but to be safe let's compare ISO strings or day/month/year.
+            const entry = history.find(h => {
+                const hDate = new Date(h.date);
+                return hDate.getDate() === d.getDate() && hDate.getMonth() === d.getMonth();
+            });
+
+            let score = 0;
+            if (entry) {
+                if (entry.protein) score++;
+                if (entry.vitamins) score++;
+                if (entry.water) score++;
+                if (entry.sweets) score++;
+            } else if (i === 0) {
+                 // For today (i=0), use current local state 'data' to reflect immediate updates
+                 score = completedCount;
+            }
+
+            days.push({ date: d, score });
+        }
+        return days;
+    };
+
+    const last7Days = getLast7Days();
 
     return (
         <div className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
@@ -70,8 +116,8 @@ export default function NutritionClient({ initialData }: NutritionClientProps) {
                         <span className="text-sm">Search...</span>
                     </div>
                     <div className="flex items-center gap-4 text-slate-400">
-                        <Bell size={20} className="hover:text-white cursor-pointer" />
-                        <UserCircle size={28} className="hover:text-white cursor-pointer" />
+                        <div className="p-2 hover:bg-slate-800 rounded-full hover:text-white transition-all cursor-pointer"><Bell size={20} /></div>
+                        <div className="p-2 hover:bg-slate-800 rounded-full hover:text-white transition-all cursor-pointer"><UserCircle size={28} /></div>
                     </div>
                 </div>
             </header>
@@ -85,7 +131,7 @@ export default function NutritionClient({ initialData }: NutritionClientProps) {
                                 <p className="text-emerald-200/50 text-sm">Heute</p>
                             </div>
                             <div className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs border border-emerald-500/20">
-                                4 Habits
+                                Goal: 4 Habits
                             </div>
                         </div>
 
@@ -111,9 +157,36 @@ export default function NutritionClient({ initialData }: NutritionClientProps) {
                                     </span>
                                 </div>
                             </div>
-                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex-1">
-                                <p className="text-sm text-emerald-100 font-medium">🌱 Status:</p>
-                                <p className="text-xs text-emerald-200/70 mt-1">{currentStatus.label}</p>
+                            <div className="flex flex-col gap-4 flex-1">
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl">
+                                    <p className="text-sm text-emerald-100 font-medium">🌱 Status:</p>
+                                    <p className="text-xs text-emerald-200/70 mt-1">{currentStatus.label}</p>
+                                </div>
+                                
+                                {/* HISTORY MINI WIDGET */}
+                                <div className="flex justify-between items-end pt-2">
+                                    {last7Days.map((day, i) => {
+                                        const isToday = i === 6;
+                                        const dayLabel = day.date.toLocaleDateString('de-DE', { weekday: 'short' }).slice(0, 2);
+                                        const dayColor = getProgressColor(day.score);
+                                        
+                                        return (
+                                            <div key={i} className="flex flex-col items-center gap-2 group">
+                                                <div 
+                                                    className={`w-8 h-12 rounded-lg border border-white/5 transition-all relative overflow-hidden ${dayColor.bg} ${isToday ? 'ring-2 ring-white/20' : 'opacity-80'}`}
+                                                    title={`${day.date.toLocaleDateString()}: ${day.score}/4 Habits`}
+                                                >
+                                                    {/* Fill height based on score */}
+                                                    <div 
+                                                        className="absolute bottom-0 left-0 w-full bg-white/20" 
+                                                        style={{ height: `${(day.score / 4) * 100}%` }}
+                                                    />
+                                                </div>
+                                                <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-white' : 'text-slate-500'}`}>{dayLabel}</span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>

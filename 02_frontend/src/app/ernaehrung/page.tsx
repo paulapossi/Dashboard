@@ -1,9 +1,10 @@
 import Sidebar from "@/components/Sidebar";
 import NutritionClient from "@/components/nutrition/NutritionClient";
-import { getTodayNutrition } from "@/actions/nutrition-actions";
+import { getTodayNutrition, getNutritionHistory } from "@/actions/nutrition-actions";
 
 export default async function NutritionPage() {
     const nutritionData = await getTodayNutrition();
+    const historyData = await getNutritionHistory();
 
     const initialData = {
         protein: nutritionData.protein,
@@ -23,7 +24,7 @@ export default async function NutritionPage() {
                 </div>
 
                 <div className="relative z-10 w-full h-full">
-                    <NutritionClient initialData={initialData} />
+                    <NutritionClient initialData={initialData} history={historyData} />
                 </div>
             </main>
         </div>
