@@ -63,7 +63,33 @@ model WeeklySport {
   @@unique([weekNumber, year])
 }
 
+model WeeklyReading {
+  id String @id @default(cuid())
 
+  weekNumber Int
+
+  year Int
+
+  day1 Boolean @default(false)
+
+  day2 Boolean @default(false)
+
+  day3 Boolean @default(false)
+
+  day4 Boolean @default(false)
+
+  day5 Boolean @default(false)
+
+  day6 Boolean @default(false)
+
+  day7 Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([weekNumber, year])
+}
 
 model DailyNutrition {
   id        String   @id @default(cuid())
