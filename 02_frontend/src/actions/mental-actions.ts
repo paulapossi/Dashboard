@@ -90,6 +90,10 @@ export async function updateMeTime(delta: number) {
   }
 }
 
+export async function decreaseMeTime() {
+    return await updateMeTime(-1);
+}
+
 // --- ACTIONS: Journal ---
 
 export async function addJournalEntry(formData: FormData) {

@@ -34,7 +34,7 @@ export default function RingCard({ id, label, progress, color = "indigo", onUpda
 
     return (
         // CONTAINER: will-change-transform verhindert Unschärfe beim Skalieren
-        <div className="h-full w-full bg-[#1e293b]/90 border border-white/5 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:scale-[1.02] hover:border-white/20 hover:shadow-2xl transition-transform duration-300 will-change-transform cursor-pointer">
+        <div className="h-full w-full bg-[#1e293b]/90 border border-white/5 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-white/20 transition-colors duration-300 cursor-pointer">
 
             {/* Link über die gesamte Karte (außer Button) */}
             <Link href={linkTarget} className="absolute inset-0 z-0" />

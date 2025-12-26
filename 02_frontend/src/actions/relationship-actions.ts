@@ -132,3 +132,31 @@ export async function getWeeklyStats() {
         return { daysTogether: 0, weeklyGoal: 4 };
     }
 }
+
+export async function decreaseDaysTogether() {
+    // Logic: Find the most recent "isTogether" entry in this week and set it to false?
+    // Or just toggle TODAY to false if it is true?
+    // "Toggle" action already exists. But maybe we specifically want to REMOVE a day.
+    // Simplest: If TODAY is true, set to false. If today is false, we can't easily "remove" a past day without more complex UI.
+    // Let's assume the user made a mistake TODAY.
+    
+    const today = startOfDay(new Date());
+    try {
+        const existing = await db.relationshipDaily.findUnique({
+            where: { date: today }
+        });
+        
+        if (existing && existing.isTogether) {
+             await db.relationshipDaily.update({
+                where: { id: existing.id },
+                data: { isTogether: false }
+            });
+            revalidatePath("/paula");
+            revalidatePath("/");
+            return { success: true };
+        }
+        return { success: false, reason: "Not together today" };
+    } catch (error) {
+        return { success: false, error };
+    }
+}

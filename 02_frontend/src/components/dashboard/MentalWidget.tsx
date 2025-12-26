@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, Brain } from "lucide-react";
+import { Check, Brain, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateMeTime } from "@/actions/mental-actions";
+import { updateMeTime, decreaseMeTime } from "@/actions/mental-actions";
 
 interface MentalWidgetProps {
     initialData?: {
@@ -56,6 +56,26 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
             setIsPending(false);
         }
     };
+    
+    const handleDecrease = async (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isPending || hours <= 0) return;
+
+        const newCount = Math.max(0, hours - 1);
+        setHours(newCount);
+
+        setIsPending(true);
+        try {
+            await decreaseMeTime();
+            router.refresh();
+        } catch (error) {
+             setHours(hours);
+        } finally {
+            setIsPending(false);
+        }
+    };
 
     const progressPercent = Math.min((hours / WEEKLY_GOAL) * 100, 100);
 
@@ -70,10 +90,10 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative h-full w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+        <div className="relative h-full w-full group cursor-pointer transition-colors duration-300">
             <Link href="/mental" className="absolute inset-0 z-10" />
 
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/80 to-purple-900/20 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden hover:border-purple-500/30 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] pointer-events-none">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/80 to-purple-900/20 rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative z-20 overflow-hidden hover:border-purple-500/30 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] pointer-events-none">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-purple-200 transition-colors">Mental</h3>
@@ -109,23 +129,35 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
                         ZIEL: {hours} / {WEEKLY_GOAL} STUNDEN
                     </span>
 
-                    <button
-                        onClick={handleAddSession}
-                        disabled={isPending}
-                        className={`
-                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 relative z-20 pointer-events-auto
-                        ${hours >= WEEKLY_GOAL
-                                ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] border border-purple-500"
-                                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
-                            }
-                    `}
-                    >
-                        {hours >= WEEKLY_GOAL ? (
-                            <>Mindful <Check size={16} strokeWidth={3} /></>
-                        ) : (
-                            <>+ Time (1h)</>
+                    <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
+                        <button
+                            onClick={handleAddSession}
+                            disabled={isPending}
+                            className={`
+                            flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
+                            ${hours >= WEEKLY_GOAL
+                                    ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] border border-purple-500"
+                                    : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
+                                }
+                        `}
+                        >
+                            {hours >= WEEKLY_GOAL ? (
+                                <>Mindful <Check size={16} strokeWidth={3} /></>
+                            ) : (
+                                <>+ Time (1h)</>
+                            )}
+                        </button>
+                        
+                        {hours > 0 && (
+                             <button
+                                onClick={handleDecrease}
+                                disabled={isPending}
+                                className="w-12 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                            >
+                                <Minus size={18} />
+                            </button>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

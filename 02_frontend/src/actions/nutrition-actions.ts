@@ -63,6 +63,37 @@ export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "wate
   }
 }
 
+export async function undoNutritionHabit() {
+    const today = startOfDay(new Date());
+
+    try {
+        const existing = await db.dailyNutrition.findUnique({
+            where: { date: today }
+        });
+
+        if (!existing) return { success: false };
+
+        // Reverse order
+        const keys = ['sweets', 'water', 'vitamins', 'protein'];
+        
+        for (const key of keys) {
+            // @ts-ignore
+            if (existing[key] === true) {
+                await db.dailyNutrition.update({
+                    where: { id: existing.id },
+                    data: { [key]: false }
+                });
+                revalidatePath("/ernaehrung");
+                revalidatePath("/");
+                return { success: true };
+            }
+        }
+        return { success: false };
+    } catch (error) {
+        return { success: false, error };
+    }
+}
+
 export async function getNutritionHistory() {
   const today = startOfDay(new Date());
   // Letzte 7 Tage berechnen (exklusive heute oder inklusive? Meistens inklusive heute rückblickend)

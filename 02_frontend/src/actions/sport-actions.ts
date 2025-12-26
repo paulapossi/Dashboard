@@ -112,3 +112,51 @@ export async function toggleSportUnit(unit: "gym1" | "gym2" | "run1" | "run2") {
     return { success: false, error };
   }
 }
+
+// Undo specific unit (set to false)
+export async function undoSportUnit() {
+    const now = new Date();
+    const weekNumber = getISOWeek(now);
+    const year = getYear(now);
+
+    // Logic: Find the LAST completed unit (run or gym) and toggle it off?
+    // Or do we need specific undo buttons? The user asked for a "small minus".
+    // For boolean flags (Sport, Reading, Nutrition), "minus" usually means "uncheck the last one added".
+    // Since we fill them in order (Gym1 -> Gym2...), we should find the last true one and set it to false.
+    
+    try {
+        const existing = await db.weeklySport.findUnique({
+             where: { weekNumber_year: { weekNumber, year } }
+        });
+
+        if (!existing) return { success: false };
+
+        // Reverse order of check to find the last active one
+        // Priority: Run2 -> Run1 -> Gym2 -> Gym1 (Reverse of addition?)
+        // Wait, user just clicks "+". Usually we fill random or specific order.
+        // Let's uncheck the "highest" index.
+        // Actually, SportWidget fills: gym1, run1, gym2, run2 ? Or whatever is missing.
+        // Let's reverse the order of filling used in Widget.
+        
+        const keys: (keyof typeof existing)[] = ['run2', 'gym2', 'run1', 'gym1']; // Reverse order
+        // We need to cast or be careful.
+        
+        for (const key of keys) {
+            // @ts-ignore
+            if (existing[key] === true) {
+                await db.weeklySport.update({
+                    where: { id: existing.id },
+                    data: { [key]: false }
+                });
+                revalidatePath("/sport");
+                revalidatePath("/");
+                return { success: true };
+            }
+        }
+        
+        return { success: false, reason: "Nothing to undo" };
+
+    } catch (error) {
+         return { success: false, error };
+    }
+}

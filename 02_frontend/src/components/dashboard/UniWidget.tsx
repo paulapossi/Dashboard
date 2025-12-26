@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, GraduationCap } from "lucide-react";
+import { Check, GraduationCap, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { quickLogUniSession } from "@/actions/uni-actions";
+import { quickLogUniSession, decreaseUniSession } from "@/actions/uni-actions";
 
 interface UniWidgetProps {
     initialData?: {
@@ -56,6 +56,29 @@ export default function UniWidget({ initialData }: UniWidgetProps) {
         }
     };
 
+    const handleDecreaseSession = async (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isPending || sessions <= 0) return;
+
+        // Optimistic Update
+        const nextSessions = Math.max(0, sessions - 1);
+        setSessions(nextSessions);
+
+        setIsPending(true);
+        try {
+            await decreaseUniSession();
+            router.refresh();
+        } catch (error) {
+            // Rollback
+            setSessions(sessions);
+            console.error("Failed to decrease uni session:", error);
+        } finally {
+            setIsPending(false);
+        }
+    };
+
     const handleCardClick = () => {
         router.push("/uni");
     };
@@ -76,7 +99,7 @@ export default function UniWidget({ initialData }: UniWidgetProps) {
 
             <div onClick={handleCardClick} className="block h-full w-full cursor-pointer">
 
-                <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] transition-transform duration-300 will-change-transform">
+                <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-indigo-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-colors duration-300">
 
                     <div className="flex justify-between items-start pointer-events-none">
                     <div>
@@ -113,23 +136,35 @@ export default function UniWidget({ initialData }: UniWidgetProps) {
                         WOCHE: {sessions} / {WEEKLY_GOAL} SESSIONS
                     </span>
 
-                    <button
-                        onClick={handleAddSession}
-                        disabled={isPending}
-                        className={`
-                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
-                        ${sessions >= WEEKLY_GOAL
-                                ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] border border-indigo-500"
-                                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
-                            }
-                    `}
-                    >
-                        {sessions >= WEEKLY_GOAL ? (
-                            <>Ziel erreicht <Check size={16} strokeWidth={3} /></>
-                        ) : (
-                            <>+ Done (1h)</>
+                    <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
+                         <button
+                            onClick={handleAddSession}
+                            disabled={isPending}
+                            className={`
+                            flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
+                            ${sessions >= WEEKLY_GOAL
+                                    ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] border border-indigo-500"
+                                    : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
+                                }
+                        `}
+                        >
+                            {sessions >= WEEKLY_GOAL ? (
+                                <>Ziel erreicht <Check size={16} strokeWidth={3} /></>
+                            ) : (
+                                <>+ Done (1h)</>
+                            )}
+                        </button>
+                        
+                        {sessions > 0 && (
+                             <button
+                                onClick={handleDecreaseSession}
+                                disabled={isPending}
+                                className="w-12 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                            >
+                                <Minus size={18} />
+                            </button>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

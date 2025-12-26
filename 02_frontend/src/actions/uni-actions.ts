@@ -40,8 +40,14 @@ export async function getWeeklyUniStats() {
             }
         });
         
+        // Summe aller Minuten in dieser Woche
+        const totalMinutes = entries.reduce((acc, entry) => acc + (entry.actualDeepWorkMinutes || 0), 0);
+        
+        // Eine "Session" definieren wir hier als 60 Minuten Deep Work für das Dashboard-Widget
+        const sessions = Math.floor(totalMinutes / 60);
+        
         return {
-            sessions: entries.length,
+            sessions: sessions,
             weeklyGoal: 7
         };
     } catch (error) {
@@ -82,6 +88,31 @@ export async function quickLogUniSession() {
     }
 }
 
+// Decrease Session (-1h)
+export async function decreaseUniSession() {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    try {
+        const existing = await db.dailyLog.findFirst({
+            where: { date: { gte: today } }
+        });
+        
+        if (existing && existing.actualDeepWorkMinutes >= 60) {
+            await db.dailyLog.update({
+                where: { id: existing.id },
+                data: { actualDeepWorkMinutes: existing.actualDeepWorkMinutes - 60 }
+            });
+            revalidatePath("/uni");
+            revalidatePath("/");
+            return { success: true };
+        }
+        return { success: false, reason: "No session to decrease" };
+    } catch (error) {
+        return { success: false, error };
+    }
+}
+
 // --- 2. LOG UPDATEN (DAS HERZSTÜCK) ---
 export async function updateDailyLog(formData: FormData) {
   const today = new Date()
@@ -92,31 +123,69 @@ export async function updateDailyLog(formData: FormData) {
     where: { date: { gte: today } }
   })
 
-  // Daten aus dem Formular holen
-  const data = {
-    mainTask: formData.get('mainTask') as string,
-    goalDeepWorkMinutes: Number(formData.get('goalDeepWorkMinutes')) || 0,
-    actualDeepWorkMinutes: Number(formData.get('actualDeepWorkMinutes')) || 0,
-    focusLevel: Number(formData.get('focusLevel')) || 0,
-    outputProduced: formData.get('outputProduced') === 'on',
-    technicalConcept: formData.get('technicalConcept') as string,
-    businessExplanation: formData.get('businessExplanation') as string,
-    topic: formData.get('topic') as string,
-    canExplain: formData.get('canExplain') === 'on',
-    realityCheckBusy: formData.get('realityCheckBusy') === 'on',
-    realityCheckAvoided: formData.get('realityCheckAvoided') === 'on',
+  const intent = formData.get('intent') as string;
+  let dataToUpdate: any = {};
+
+  if (intent === 'mainFocus') {
+      dataToUpdate = {
+          mainTask: formData.get('mainTask') as string,
+          goalDeepWorkMinutes: Number(formData.get('goalDeepWorkMinutes')) || 0,
+      };
+  } else if (intent === 'deepWork') {
+      dataToUpdate = {
+          actualDeepWorkMinutes: Number(formData.get('actualDeepWorkMinutes')) || 0,
+          focusLevel: Number(formData.get('focusLevel')) || 0,
+          outputProduced: formData.get('outputProduced') === 'on',
+      };
+  } else if (intent === 'translator') {
+      dataToUpdate = {
+          technicalConcept: formData.get('technicalConcept') as string,
+          businessExplanation: formData.get('businessExplanation') as string,
+          topic: formData.get('topic') as string,
+          canExplain: formData.get('canExplain') === 'on',
+      };
+  } else if (intent === 'realityCheck') {
+      dataToUpdate = {
+           realityCheckBusy: formData.get('realityCheckBusy') === 'on',
+           realityCheckAvoided: formData.get('realityCheckAvoided') === 'on',
+      };
+  } else {
+      // Fallback for generic updates if intent is missing (should not happen with new forms)
+      // This preserves old behavior just in case, or we could just return.
+      // Let's assume generic update tries to update everything it finds.
+       dataToUpdate = {
+        mainTask: formData.get('mainTask') as string,
+        goalDeepWorkMinutes: Number(formData.get('goalDeepWorkMinutes')) || 0,
+        actualDeepWorkMinutes: Number(formData.get('actualDeepWorkMinutes')) || 0,
+        focusLevel: Number(formData.get('focusLevel')) || 0,
+        outputProduced: formData.get('outputProduced') === 'on',
+        technicalConcept: formData.get('technicalConcept') as string,
+        businessExplanation: formData.get('businessExplanation') as string,
+        topic: formData.get('topic') as string,
+        canExplain: formData.get('canExplain') === 'on',
+        realityCheckBusy: formData.get('realityCheckBusy') === 'on',
+        realityCheckAvoided: formData.get('realityCheckAvoided') === 'on',
+      }
+      // Clean undefined/nulls if we wanted to be safe, but for now relying on form input presence.
+      // Actually, standard FormData.get returns null if missing.
+      // We should probably filter out nulls if we were doing a merge, but here we are explicit in other branches.
   }
+  
+  // Remove fields that are effectively "empty" or "null" if we don't want to overwrite with null?
+  // No, if user clears a text field, we want to save empty string.
+  // But if the field wasn't in the form, we shouldn't touch it.
+  // The 'intent' blocks above solve this by ONLY selecting relevant fields.
 
   if (existingLog) {
     await db.dailyLog.update({
       where: { id: existingLog.id },
-      data: data
+      data: dataToUpdate
     })
   } else {
     await db.dailyLog.create({
       data: {
         date: new Date(),
-        ...data
+        ...dataToUpdate
       }
     })
   }

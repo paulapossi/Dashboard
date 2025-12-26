@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { toggleReadingDay } from "@/actions/reading-actions";
+import { toggleReadingDay, undoReadingDay } from "@/actions/reading-actions";
 import { useRouter } from "next/navigation";
 
 type ReadingData = {
@@ -61,6 +61,32 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
             }
         }
     };
+    
+    const handleUndo = async (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isPending) return;
+        
+        // Find last active key
+        const reverseKeys = [...orderedKeys].reverse();
+        const lastKey = reverseKeys.find(key => data[key]);
+
+        if (lastKey) {
+             const newData = { ...data, [lastKey]: false };
+             setData(newData);
+             
+             setIsPending(true);
+             try {
+                 await undoReadingDay();
+                 router.refresh();
+             } catch (error) {
+                 setData(data);
+             } finally {
+                 setIsPending(false);
+             }
+        }
+    };
 
     const completedCount = Object.values(data).filter(Boolean).length;
     const WEEKLY_GOAL = 7;
@@ -77,10 +103,10 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative h-full w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+        <div className="relative h-full w-full group cursor-pointer transition-colors duration-300">
             <Link href="/lesen" className="absolute inset-0 z-10" />
 
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-purple-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden hover:border-purple-500/30 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] pointer-events-none">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-purple-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative z-20 overflow-hidden hover:border-purple-500/30 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] pointer-events-none">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-purple-200 transition-colors">Lesen</h3>
@@ -116,23 +142,35 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
                         ZIEL: {completedCount} / {WEEKLY_GOAL} TAGE
                     </span>
 
-                    <button
-                        onClick={handleQuickAdd}
-                        disabled={isPending}
-                        className={`
-                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 relative z-20 pointer-events-auto
-                        ${completedCount >= WEEKLY_GOAL
-                                ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] border border-purple-500"
-                                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
-                            }
-                    `}
-                    >
-                        {completedCount >= WEEKLY_GOAL ? (
-                            <>Erledigt <Check size={16} strokeWidth={3} /></>
-                        ) : (
-                            <>+ Eintragen</>
+                    <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
+                        <button
+                            onClick={handleQuickAdd}
+                            disabled={isPending}
+                            className={`
+                            flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
+                            ${completedCount >= WEEKLY_GOAL
+                                    ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] border border-purple-500"
+                                    : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
+                                }
+                        `}
+                        >
+                            {completedCount >= WEEKLY_GOAL ? (
+                                <>Erledigt <Check size={16} strokeWidth={3} /></>
+                            ) : (
+                                <>+ Eintragen</>
+                            )}
+                        </button>
+                        
+                         {completedCount > 0 && (
+                            <button
+                                onClick={handleUndo}
+                                disabled={isPending}
+                                className="w-12 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                            >
+                                <Minus size={18} />
+                            </button>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

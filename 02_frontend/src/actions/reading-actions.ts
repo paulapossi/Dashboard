@@ -68,3 +68,36 @@ export async function toggleReadingDay(dayKey: string) {
     return { success: false, error };
   }
 }
+
+export async function undoReadingDay() {
+  const now = new Date();
+  const weekNumber = getISOWeek(now);
+  const year = getYear(now);
+
+  try {
+    const existing = await db.weeklyReading.findUnique({
+      where: { weekNumber_year: { weekNumber, year } }
+    });
+
+    if (!existing) return { success: false };
+
+    // Reverse order: day7 -> day1
+    const keys = ['day7', 'day6', 'day5', 'day4', 'day3', 'day2', 'day1'];
+    
+    for (const key of keys) {
+        // @ts-ignore
+        if (existing[key] === true) {
+            await db.weeklyReading.update({
+                where: { id: existing.id },
+                data: { [key]: false }
+            });
+            revalidatePath("/lesen");
+            revalidatePath("/");
+            return { success: true };
+        }
+    }
+    return { success: false };
+  } catch (error) {
+      return { success: false, error };
+  }
+}

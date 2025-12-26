@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, Leaf } from "lucide-react";
+import { Check, Leaf, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { toggleNutritionHabit } from "@/actions/nutrition-actions";
+import { toggleNutritionHabit, undoNutritionHabit } from "@/actions/nutrition-actions";
 import { useRouter } from "next/navigation";
 
 type NutritionData = {
@@ -61,6 +61,30 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
             }
         }
     };
+    
+    const handleUndo = async (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isPending) return;
+        
+        const reverseKeys: (keyof NutritionData)[] = ['sweets', 'water', 'vitamins', 'protein'];
+        const lastKey = reverseKeys.find(key => data[key]);
+
+        if (lastKey) {
+            const newData = { ...data, [lastKey]: false };
+            setData(newData);
+            setIsPending(true);
+            try {
+                await undoNutritionHabit();
+                router.refresh();
+            } catch (error) {
+                setData(data);
+            } finally {
+                setIsPending(false);
+            }
+        }
+    };
 
     const completedCount = Object.values(data).filter(Boolean).length;
     const DAILY_GOAL = 4;
@@ -77,10 +101,10 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative h-full w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+        <div className="relative h-full w-full group cursor-pointer transition-colors duration-300">
             <Link href="/ernaehrung" className="absolute inset-0 z-10" />
             
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-emerald-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(168,185,129,0.2)] pointer-events-none">
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-emerald-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative z-20 overflow-hidden hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(168,185,129,0.2)] pointer-events-none">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-emerald-200 transition-colors">Ernährung</h3>
@@ -116,23 +140,35 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                         HEUTE: {completedCount} / {DAILY_GOAL}
                     </span>
 
-                    <button
-                        onClick={handleQuickAdd}
-                        disabled={isPending}
-                        className={`
-                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 relative z-20 pointer-events-auto
-                        ${completedCount >= DAILY_GOAL
-                                ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-500"
-                                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
-                            }
-                    `}
-                    >
-                        {completedCount >= DAILY_GOAL ? (
-                            <>Complete <Check size={16} strokeWidth={3} /></>
-                        ) : (
-                            <>+ Check</>
+                    <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
+                         <button
+                            onClick={handleQuickAdd}
+                            disabled={isPending}
+                            className={`
+                            flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
+                            ${completedCount >= DAILY_GOAL
+                                    ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-500"
+                                    : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
+                                }
+                        `}
+                        >
+                            {completedCount >= DAILY_GOAL ? (
+                                <>Complete <Check size={16} strokeWidth={3} /></>
+                            ) : (
+                                <>+ Check</>
+                            )}
+                        </button>
+                        
+                        {completedCount > 0 && (
+                            <button
+                                onClick={handleUndo}
+                                disabled={isPending}
+                                className="w-12 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                            >
+                                <Minus size={18} />
+                            </button>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

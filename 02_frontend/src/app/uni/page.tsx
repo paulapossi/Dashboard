@@ -36,6 +36,7 @@ export default async function UniPage() {
               
               {/* MAIN FOCUS FORM */}
               <form action={updateDailyLog} className="bg-[#27272a]/50 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row gap-6 items-end shadow-xl">
+                <input type="hidden" name="intent" value="mainFocus" />
                 <div className="flex-1 w-full">
                   <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 block">Main Focus Today</label>
                   <input 
@@ -72,6 +73,7 @@ export default async function UniPage() {
                         <h2 className="font-bold tracking-wide text-white">DEEP WORK LOG</h2>
                     </div>
                     <form action={updateDailyLog} className="space-y-6">
+                        <input type="hidden" name="intent" value="deepWork" />
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs text-slate-500 uppercase block mb-2">Ist-Zeit (Min)</label>
@@ -103,6 +105,7 @@ export default async function UniPage() {
                         <h2 className="font-bold tracking-wide text-white">TRANSLATOR SKILL</h2>
                     </div>
                     <form action={updateDailyLog} className="space-y-4">
+                        <input type="hidden" name="intent" value="translator" />
                         <input name="technicalConcept" placeholder="Technisches Konzept (z.B. API, Docker)" defaultValue={log?.technicalConcept || ''} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none" />
                         <textarea name="businessExplanation" placeholder="Erklärung für CEO (max 2 Sätze, Business Value)" defaultValue={log?.businessExplanation || ''} className="w-full bg-[#18181b]/50 border border-white/10 rounded-lg p-3 text-sm text-white h-24 resize-none focus:border-purple-500 focus:outline-none" />
                         
@@ -179,6 +182,7 @@ export default async function UniPage() {
                     <h2 className="font-bold tracking-wide text-white">REALITY CHECK & NETWORK</h2>
                 </div>
                 <form action={updateDailyLog} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <input type="hidden" name="intent" value="realityCheck" />
                     <div className="bg-[#27272a]/30 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:bg-[#27272a]/50 transition-colors">
                         <span className="text-sm text-slate-300">Fake Work (nur busy)?</span>
                         <input name="realityCheckBusy" type="checkbox" defaultChecked={log?.realityCheckBusy} className="w-5 h-5 accent-orange-500" />
