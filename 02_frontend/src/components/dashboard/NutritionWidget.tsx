@@ -36,6 +36,7 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
     }, [initialData]);
 
     const handleQuickAdd = async (e: MouseEvent) => {
+        // Prevent event from bubbling to the Link (though structure prevents it now, safe to keep)
         e.preventDefault();
         e.stopPropagation();
 
@@ -76,8 +77,10 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
     if (!mounted) return null;
 
     return (
-        <Link href="/ernaehrung" className="block h-full w-full">
-            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-emerald-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-emerald-500/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,185,129,0.2)] transition-transform duration-300 will-change-transform cursor-pointer">
+        <div className="relative h-full w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+            <Link href="/ernaehrung" className="absolute inset-0 z-10" />
+            
+            <div className="h-full w-full bg-gradient-to-br from-slate-900/60 to-emerald-900/20 backdrop-blur-md rounded-[32px] p-6 flex flex-col justify-between shadow-lg relative overflow-hidden hover:border-emerald-500/30 hover:shadow-[0_0_30px_rgba(168,185,129,0.2)] pointer-events-none">
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white group-hover:text-emerald-200 transition-colors">Ernährung</h3>
@@ -117,7 +120,7 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                         onClick={handleQuickAdd}
                         disabled={isPending}
                         className={`
-                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 z-20 relative
+                        w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 relative z-20 pointer-events-auto
                         ${completedCount >= DAILY_GOAL
                                 ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-500"
                                 : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
@@ -132,6 +135,6 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                     </button>
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }
