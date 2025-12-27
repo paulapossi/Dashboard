@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import ReadingClient from "@/components/reading/ReadingClient";
 import { getWeeklyReading } from "@/actions/reading-actions";
+import QuoteBar from "@/components/QuoteBar";
 
 export default async function LesenPage() {
     const readingData = await getWeeklyReading();
@@ -23,6 +24,7 @@ export default async function LesenPage() {
             </div>
 
             <main className="flex-1 flex flex-col h-full relative overflow-y-auto">
+                <QuoteBar />
                 {/* BACKGROUND */}
                 <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#0f1115]">
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0f1115] to-[#0f1115]"></div>

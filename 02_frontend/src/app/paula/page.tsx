@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import PaulaClient from "@/components/relationship/PaulaClient";
 import { getTodayRelationship, getRelationshipHistory, getWeeklyStats } from "@/actions/relationship-actions";
+import QuoteBar from "@/components/QuoteBar";
 
 export default async function PaulaPage() {
     const todayData = await getTodayRelationship();
@@ -15,6 +16,7 @@ export default async function PaulaPage() {
             </div>
 
             <main className="flex-1 flex flex-col h-full relative overflow-y-auto">
+                <QuoteBar />
                 {/* BACKGROUND */}
                 <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#0f1115]">
                     <div className="absolute inset-0 bg-gradient-to-br from-rose-950/30 via-[#0f1115] to-[#0f1115] opacity-70"></div>

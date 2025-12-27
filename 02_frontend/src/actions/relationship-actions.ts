@@ -1,15 +1,19 @@
-"use server";
-
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { startOfDay, startOfWeek, getISOWeek, getYear } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, getISOWeek, getYear } from "date-fns";
 
 export async function getTodayRelationship() {
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
 
   try {
-    const entry = await db.relationshipDaily.findUnique({
-      where: { date: today },
+    const entry = await db.relationshipDaily.findFirst({
+      where: { 
+          date: {
+              gte: todayStart,
+              lte: todayEnd
+          }
+      },
     });
 
     if (!entry) {
@@ -18,23 +22,29 @@ export async function getTodayRelationship() {
         qualityTime: false,
         communication: false,
         gratitude: "",
-        date: today,
+        date: todayStart,
       };
     }
 
     return entry;
   } catch (error) {
     console.error("Error fetching today relationship:", error);
-    return { isTogether: false, qualityTime: false, communication: false, gratitude: "", date: today };
+    return { isTogether: false, qualityTime: false, communication: false, gratitude: "", date: todayStart };
   }
 }
 
 export async function toggleTogether() {
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
 
   try {
-    const existing = await db.relationshipDaily.findUnique({
-      where: { date: today }
+    const existing = await db.relationshipDaily.findFirst({
+      where: { 
+          date: {
+              gte: todayStart,
+              lte: todayEnd
+          }
+       }
     });
 
     if (existing) {
@@ -42,10 +52,11 @@ export async function toggleTogether() {
         where: { id: existing.id },
         data: { isTogether: !existing.isTogether }
       });
-    } else {
+    }
+    else {
       await db.relationshipDaily.create({
         data: {
-          date: today,
+          date: todayStart,
           isTogether: true
         }
       });
@@ -61,11 +72,17 @@ export async function toggleTogether() {
 }
 
 export async function saveCheckIn(data: { qualityTime: boolean; communication: boolean; gratitude: string }) {
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
 
   try {
-    const existing = await db.relationshipDaily.findUnique({
-      where: { date: today }
+    const existing = await db.relationshipDaily.findFirst({
+      where: { 
+          date: {
+              gte: todayStart,
+              lte: todayEnd
+          }
+       }
     });
 
     if (existing) {
@@ -78,10 +95,11 @@ export async function saveCheckIn(data: { qualityTime: boolean; communication: b
           isTogether: true // If checking in, usually together
         }
       });
-    } else {
+    }
+    else {
       await db.relationshipDaily.create({
         data: {
-          date: today,
+          date: todayStart,
           isTogether: true,
           qualityTime: data.qualityTime,
           communication: data.communication,
@@ -140,10 +158,17 @@ export async function decreaseDaysTogether() {
     // Simplest: If TODAY is true, set to false. If today is false, we can't easily "remove" a past day without more complex UI.
     // Let's assume the user made a mistake TODAY.
     
-    const today = startOfDay(new Date());
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
     try {
-        const existing = await db.relationshipDaily.findUnique({
-            where: { date: today }
+        const existing = await db.relationshipDaily.findFirst({
+            where: { 
+                date: {
+                    gte: todayStart,
+                    lte: todayEnd
+                }
+             }
         });
         
         if (existing && existing.isTogether) {

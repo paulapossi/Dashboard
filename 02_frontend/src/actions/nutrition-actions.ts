@@ -2,15 +2,19 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { startOfDay } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 
 export async function getTodayNutrition() {
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
 
   try {
-    const entry = await db.dailyNutrition.findUnique({
+    const entry = await db.dailyNutrition.findFirst({
       where: {
-        date: today,
+        date: {
+          gte: todayStart,
+          lte: todayEnd
+        },
       },
     });
 
@@ -20,23 +24,29 @@ export async function getTodayNutrition() {
         vitamins: false,
         water: false,
         sweets: false,
-        date: today,
+        date: todayStart,
       };
     }
 
     return entry;
   } catch (error) {
     console.error("Error fetching today nutrition:", error);
-    return { protein: false, vitamins: false, water: false, sweets: false, date: today };
+    return { protein: false, vitamins: false, water: false, sweets: false, date: todayStart };
   }
 }
 
 export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "water" | "sweets") {
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
 
   try {
-    const existing = await db.dailyNutrition.findUnique({
-      where: { date: today }
+    const existing = await db.dailyNutrition.findFirst({
+      where: {
+         date: {
+            gte: todayStart,
+            lte: todayEnd
+         }
+      }
     });
 
     if (existing) {
@@ -48,7 +58,7 @@ export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "wate
     } else {
       await db.dailyNutrition.create({
         data: {
-          date: today,
+          date: todayStart, // Force normalized Midnight
           [habit]: true
         }
       });
@@ -64,11 +74,17 @@ export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "wate
 }
 
 export async function undoNutritionHabit() {
-    const today = startOfDay(new Date());
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
 
     try {
-        const existing = await db.dailyNutrition.findUnique({
-            where: { date: today }
+        const existing = await db.dailyNutrition.findFirst({
+            where: { 
+                date: {
+                    gte: todayStart,
+                    lte: todayEnd
+                }
+            }
         });
 
         if (!existing) return { success: false };

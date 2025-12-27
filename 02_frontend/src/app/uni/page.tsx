@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import { getTodayLog, getTasks, updateDailyLog, addTask, toggleTask } from "@/actions/uni-actions";
 import { CheckCircle2, AlertCircle, Brain, Briefcase, Clock, Zap, Network, Plus } from "lucide-react";
+import QuoteBar from "@/components/QuoteBar";
 
 export default async function UniPage() {
   // Daten vom Server holen
@@ -17,6 +18,7 @@ export default async function UniPage() {
       </div>
 
       <main className="flex-1 flex flex-col h-full relative overflow-y-auto p-6 md:p-8 gap-8">
+        <QuoteBar />
         
         {/* BACKGROUND EFFECTS */}
         <div className="fixed top-0 left-0 right-0 h-full pointer-events-none overflow-hidden z-0 bg-[#27272a]">

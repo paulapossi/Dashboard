@@ -2,19 +2,19 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-
-import { startOfWeek } from "date-fns"
+import { startOfWeek, startOfDay, endOfDay } from "date-fns"
 
 // --- 1. LOG LADEN ODER ERSTELLEN ---
 export async function getTodayLog() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0) // Auf 0 Uhr setzen für Vergleich
+  const todayStart = startOfDay(new Date())
+  const todayEnd = endOfDay(new Date())
 
-  // Wir suchen ein Log, das nach heute 0 Uhr erstellt wurde
+  // Wir suchen ein Log im heutigen Zeitfenster
   let log = await db.dailyLog.findFirst({
     where: {
       date: {
-        gte: today
+        gte: todayStart,
+        lte: todayEnd
       }
     }
   })
@@ -57,12 +57,17 @@ export async function getWeeklyUniStats() {
 
 // Bessere Action zum schnellen Loggen einer Session (z.B. +1h)
 export async function quickLogUniSession() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const todayStart = startOfDay(new Date())
+    const todayEnd = endOfDay(new Date())
     
     try {
         const existing = await db.dailyLog.findFirst({
-            where: { date: { gte: today } }
+            where: { 
+                date: { 
+                    gte: todayStart,
+                    lte: todayEnd
+                } 
+            }
         });
         
         if (existing) {
@@ -73,7 +78,7 @@ export async function quickLogUniSession() {
         } else {
             await db.dailyLog.create({
                 data: {
-                    date: new Date(),
+                    date: todayStart, // Force midnight
                     actualDeepWorkMinutes: 60,
                     goalDeepWorkMinutes: 120 // Default Goal
                 }
@@ -90,12 +95,17 @@ export async function quickLogUniSession() {
 
 // Decrease Session (-1h)
 export async function decreaseUniSession() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const todayStart = startOfDay(new Date())
+    const todayEnd = endOfDay(new Date())
     
     try {
         const existing = await db.dailyLog.findFirst({
-            where: { date: { gte: today } }
+            where: { 
+                date: { 
+                    gte: todayStart,
+                    lte: todayEnd
+                } 
+            }
         });
         
         if (existing && existing.actualDeepWorkMinutes >= 60) {
@@ -115,12 +125,17 @@ export async function decreaseUniSession() {
 
 // --- 2. LOG UPDATEN (DAS HERZSTÜCK) ---
 export async function updateDailyLog(formData: FormData) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const todayStart = startOfDay(new Date())
+  const todayEnd = endOfDay(new Date())
 
   // Wir suchen erst, ob es schon ein Log gibt
   const existingLog = await db.dailyLog.findFirst({
-    where: { date: { gte: today } }
+    where: { 
+        date: { 
+            gte: todayStart,
+            lte: todayEnd
+        } 
+    }
   })
 
   const intent = formData.get('intent') as string;
@@ -150,9 +165,7 @@ export async function updateDailyLog(formData: FormData) {
            realityCheckAvoided: formData.get('realityCheckAvoided') === 'on',
       };
   } else {
-      // Fallback for generic updates if intent is missing (should not happen with new forms)
-      // This preserves old behavior just in case, or we could just return.
-      // Let's assume generic update tries to update everything it finds.
+      // Fallback
        dataToUpdate = {
         mainTask: formData.get('mainTask') as string,
         goalDeepWorkMinutes: Number(formData.get('goalDeepWorkMinutes')) || 0,
@@ -166,16 +179,8 @@ export async function updateDailyLog(formData: FormData) {
         realityCheckBusy: formData.get('realityCheckBusy') === 'on',
         realityCheckAvoided: formData.get('realityCheckAvoided') === 'on',
       }
-      // Clean undefined/nulls if we wanted to be safe, but for now relying on form input presence.
-      // Actually, standard FormData.get returns null if missing.
-      // We should probably filter out nulls if we were doing a merge, but here we are explicit in other branches.
   }
   
-  // Remove fields that are effectively "empty" or "null" if we don't want to overwrite with null?
-  // No, if user clears a text field, we want to save empty string.
-  // But if the field wasn't in the form, we shouldn't touch it.
-  // The 'intent' blocks above solve this by ONLY selecting relevant fields.
-
   if (existingLog) {
     await db.dailyLog.update({
       where: { id: existingLog.id },
@@ -184,7 +189,7 @@ export async function updateDailyLog(formData: FormData) {
   } else {
     await db.dailyLog.create({
       data: {
-        date: new Date(),
+        date: todayStart,
         ...dataToUpdate
       }
     })
