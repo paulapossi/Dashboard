@@ -2,14 +2,14 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { getISOWeek, getYear } from "date-fns";
+import { getISOWeek, getISOWeekYear } from "date-fns";
 
 // --- GETTERS ---
 
 export async function getMentalData() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     // 1. Weekly Me Time
@@ -53,7 +53,7 @@ export async function getMentalData() {
 export async function updateMeTime(delta: number) {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     const existing = await db.weeklyMental.findUnique({

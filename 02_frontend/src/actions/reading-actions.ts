@@ -2,12 +2,12 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { getISOWeek, getYear } from "date-fns";
+import { getISOWeek, getISOWeekYear } from "date-fns";
 
 export async function getWeeklyReading() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     const entry = await db.weeklyReading.findUnique({
@@ -37,7 +37,7 @@ export async function getWeeklyReading() {
 export async function toggleReadingDay(dayKey: string) {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     const existing = await db.weeklyReading.findUnique({
@@ -72,7 +72,7 @@ export async function toggleReadingDay(dayKey: string) {
 export async function undoReadingDay() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     const existing = await db.weeklyReading.findUnique({

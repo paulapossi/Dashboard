@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { getISOWeek, getYear } from "date-fns";
+import { getISOWeek, getISOWeekYear } from "date-fns";
 
 /**
  * Holt den Sport-Eintrag für die aktuelle Woche.
@@ -15,7 +15,7 @@ import { getISOWeek, getYear } from "date-fns";
 export async function getWeeklySport() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     const entry = await db.weeklySport.findUnique({
@@ -53,7 +53,7 @@ export async function getWeeklySport() {
 export async function toggleSportUnit(unit: "gym1" | "gym2" | "run1" | "run2") {
   const now = new Date();
   const weekNumber = getISOWeek(now);
-  const year = getYear(now);
+  const year = getISOWeekYear(now);
 
   try {
     // 1. Eintrag suchen oder erstellen
@@ -117,7 +117,7 @@ export async function toggleSportUnit(unit: "gym1" | "gym2" | "run1" | "run2") {
 export async function undoSportUnit() {
     const now = new Date();
     const weekNumber = getISOWeek(now);
-    const year = getYear(now);
+    const year = getISOWeekYear(now);
 
     // Logic: Find the LAST completed unit (run or gym) and toggle it off?
     // Or do we need specific undo buttons? The user asked for a "small minus".
