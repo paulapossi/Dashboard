@@ -1,3 +1,5 @@
+'use server'
+
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { startOfDay, endOfDay, startOfWeek, getISOWeek, getYear } from "date-fns";
