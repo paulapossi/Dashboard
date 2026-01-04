@@ -28,6 +28,16 @@ export async function getTodayLog() {
   return log
 }
 
+export async function getRecentLogs() {
+  const logs = await db.dailyLog.findMany({
+    orderBy: {
+      date: 'desc'
+    },
+    take: 7
+  })
+  return logs
+}
+
 export async function getWeeklyUniStats() {
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
