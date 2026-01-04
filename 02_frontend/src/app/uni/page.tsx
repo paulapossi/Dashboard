@@ -1,9 +1,11 @@
 import Sidebar from "@/components/Sidebar";
 import { getTodayLog, getTasks, updateDailyLog, addTask, toggleTask, getRecentLogs } from "@/actions/uni-actions";
-import { CheckCircle2, AlertCircle, Brain, Briefcase, Clock, Zap, Network, Plus, CalendarDays, BookOpen, Lightbulb } from "lucide-react";
+import { CheckCircle2, AlertCircle, Brain, Briefcase, Clock, Zap, Network, Plus, CalendarDays } from "lucide-react";
 import QuoteBar from "@/components/QuoteBar";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+
+export const dynamic = "force-dynamic";
 
 export default async function UniPage() {
   // Daten vom Server holen
