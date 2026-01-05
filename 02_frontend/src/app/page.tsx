@@ -6,6 +6,8 @@ import { getTodayRelationship, getWeeklyStats } from "@/actions/relationship-act
 import { getMentalData } from "@/actions/mental-actions";
 import { getWeeklyUniStats } from "@/actions/uni-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
     // 1. Alle Daten parallel laden (Ohne Cache, um Sync-Probleme zu vermeiden)
     const [
