@@ -2,9 +2,11 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logError } from "@/lib/error-logger";
 import { startOfDay, endOfDay } from "date-fns";
+import { cache } from "react";
 
-export async function getTodayNutrition() {
+export const getTodayNutrition = cache(async function getTodayNutrition() {
   const todayStart = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
 
@@ -33,7 +35,7 @@ export async function getTodayNutrition() {
     console.error("Error fetching today nutrition:", error);
     return { protein: false, vitamins: false, water: false, sweets: false, date: todayStart };
   }
-}
+});
 
 export async function toggleNutritionHabit(habit: "protein" | "vitamins" | "water" | "sweets") {
   const todayStart = startOfDay(new Date());

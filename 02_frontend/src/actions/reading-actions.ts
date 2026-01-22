@@ -2,9 +2,11 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logError } from "@/lib/error-logger";
 import { getISOWeek, getISOWeekYear } from "date-fns";
+import { cache } from "react";
 
-export async function getWeeklyReading() {
+export const getWeeklyReading = cache(async function getWeeklyReading() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
   const year = getISOWeekYear(now);
@@ -32,7 +34,7 @@ export async function getWeeklyReading() {
     console.error("Error fetching weekly reading:", error);
     return { day1: false, day2: false, day3: false, day4: false, day5: false, day6: false, day7: false, weekNumber, year };
   }
-}
+});
 
 export async function toggleReadingDay(dayKey: string) {
   const now = new Date();

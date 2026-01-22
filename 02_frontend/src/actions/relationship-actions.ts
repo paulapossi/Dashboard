@@ -3,8 +3,9 @@
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { startOfDay, endOfDay, startOfWeek, getISOWeek, getYear } from "date-fns";
+import { cache } from "react";
 
-export async function getTodayRelationship() {
+export const getTodayRelationship = cache(async function getTodayRelationship() {
   const todayStart = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
 
@@ -33,7 +34,7 @@ export async function getTodayRelationship() {
     console.error("Error fetching today relationship:", error);
     return { isTogether: false, qualityTime: false, communication: false, gratitude: "", date: todayStart };
   }
-}
+});
 
 export async function toggleTogether() {
   const todayStart = startOfDay(new Date());

@@ -2,7 +2,9 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logError } from "@/lib/error-logger";
 import { getISOWeek, getISOWeekYear } from "date-fns";
+import { cache } from "react";
 
 /**
  * Holt den Sport-Eintrag für die aktuelle Woche.
@@ -12,7 +14,7 @@ import { getISOWeek, getISOWeekYear } from "date-fns";
  * 
  * Strategie: Wir geben das Objekt zurück. Wenn null, muss das Frontend wissen, alles ist false.
  */
-export async function getWeeklySport() {
+export const getWeeklySport = cache(async function getWeeklySport() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
   const year = getISOWeekYear(now);
@@ -44,7 +46,7 @@ export async function getWeeklySport() {
     console.error("Error fetching weekly sport:", error);
     return { gym1: false, gym2: false, run1: false, run2: false, weekNumber, year };
   }
-}
+});
 
 /**
  * Schaltet eine Sport-Einheit um (true/false).

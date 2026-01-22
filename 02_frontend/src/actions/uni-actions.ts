@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { startOfWeek, startOfDay, endOfDay } from "date-fns"
+import { cache } from "react";
 
 // --- 1. LOG LADEN ODER ERSTELLEN ---
 export async function getTodayLog() {
@@ -38,7 +39,7 @@ export async function getRecentLogs() {
   return logs
 }
 
-export async function getWeeklyUniStats() {
+export const getWeeklyUniStats = cache(async function getWeeklyUniStats() {
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     
@@ -63,7 +64,7 @@ export async function getWeeklyUniStats() {
     } catch (error) {
         return { sessions: 0, weeklyGoal: 7 };
     }
-}
+});
 
 // Bessere Action zum schnellen Loggen einer Session (z.B. +1h)
 export async function quickLogUniSession() {

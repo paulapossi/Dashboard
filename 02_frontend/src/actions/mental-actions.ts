@@ -2,11 +2,13 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logError } from "@/lib/error-logger";
 import { getISOWeek, getISOWeekYear } from "date-fns";
+import { cache } from "react";
 
 // --- GETTERS ---
 
-export async function getMentalData() {
+export const getMentalData = cache(async function getMentalData() {
   const now = new Date();
   const weekNumber = getISOWeek(now);
   const year = getISOWeekYear(now);
@@ -46,7 +48,7 @@ export async function getMentalData() {
       year
     };
   }
-}
+});
 
 // --- ACTIONS: Me Time ---
 

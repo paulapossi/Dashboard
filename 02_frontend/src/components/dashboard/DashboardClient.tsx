@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import RingCard from "@/components/dashboard/RingCard";
 
 // WIDGET IMPORTS
@@ -15,25 +15,15 @@ import Sidebar from "@/components/Sidebar";
 import { Search, Bell, UserCircle, Save } from "lucide-react";
 import { createBrainDump } from "@/actions/mental-actions";
 import { useRouter } from "next/navigation";
-
-// Types
-type SportData = {
-    gym1: boolean; gym2: boolean; run1: boolean; run2: boolean;
-};
-type ReadingData = {
-    day1: boolean; day2: boolean; day3: boolean; day4: boolean; day5: boolean; day6: boolean; day7: boolean;
-};
-type NutritionData = {
-    protein: boolean; vitamins: boolean; water: boolean; sweets: boolean;
-};
+import type { SportData, ReadingData, NutritionData, RelationshipData, MentalData, UniData } from "@/types";
 
 interface DashboardClientProps {
     sportData?: SportData;
     readingData?: ReadingData;
     nutritionData?: NutritionData;
-    relationshipData?: { isTogether: boolean; daysTogether: number; weeklyGoal: number };
-    mentalData?: { meTimeHours: number; weeklyGoal: number };
-    uniData?: { sessions: number; weeklyGoal: number };
+    relationshipData?: RelationshipData;
+    mentalData?: MentalData;
+    uniData?: UniData;
 }
 
 export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData, mentalData, uniData }: DashboardClientProps) {
@@ -47,27 +37,15 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
     const getMentalProgress = () => mentalData ? Math.round((mentalData.meTimeHours / mentalData.weeklyGoal) * 100) : 0;
     const getUniProgress = () => uniData ? Math.round((uniData.sessions / uniData.weeklyGoal) * 100) : 0;
 
-    // Categories state
-    const [categories, setCategories] = useState([
+    // Memoized categories based on current data
+    const categories = useMemo(() => [
         { id: "uni", label: "Uni", progress: getUniProgress(), color: "indigo" },
         { id: "sport", label: "Sport", progress: getSportProgress(), color: "teal" },
         { id: "lesen", label: "Lesen", progress: getReadingProgress(), color: "yellow" },
         { id: "food", label: "Ernährung", progress: getNutritionProgress(), color: "green" },
         { id: "paula", label: "Paula", progress: getRelationshipProgress(), color: "red" },
         { id: "mental", label: "Mental", progress: getMentalProgress(), color: "purple" },
-    ]);
-
-    // Sync categories when props change
-    useEffect(() => {
-        setCategories([
-            { id: "uni", label: "Uni", progress: getUniProgress(), color: "indigo" },
-            { id: "sport", label: "Sport", progress: getSportProgress(), color: "teal" },
-            { id: "lesen", label: "Lesen", progress: getReadingProgress(), color: "yellow" },
-            { id: "food", label: "Ernährung", progress: getNutritionProgress(), color: "green" },
-            { id: "paula", label: "Paula", progress: getRelationshipProgress(), color: "red" },
-            { id: "mental", label: "Mental", progress: getMentalProgress(), color: "purple" },
-        ]);
-    }, [sportData, readingData, nutritionData, relationshipData, mentalData, uniData]);
+    ], [sportData, readingData, nutritionData, relationshipData, mentalData, uniData]);
 
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -95,14 +73,6 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
     useEffect(() => {
         setIsLoaded(true);
     }, []);
-
-    const updateProgress = (id: string, amount: number) => {
-        // Only for fallback rings that aren't widgets yet
-        setCategories((prev) => prev.map((cat) => {
-            if (cat.id === id) return { ...cat, progress: Math.max(0, Math.min(100, cat.progress + amount)) };
-            return cat;
-        }));
-    };
 
     if (!isLoaded) return null;
 
@@ -141,7 +111,7 @@ export default function DashboardClient({ sportData, readingData, nutritionData,
                         else if (cat.id === "lesen") content = <ReadingWidget initialData={readingData} />;
                         else if (cat.id === "food") content = <NutritionWidget initialData={nutritionData} />;
                         else if (cat.id === "mental") content = <MentalWidget initialData={mentalData} />;
-                        else content = <RingCard id={cat.id} label={cat.label} progress={cat.progress} color={cat.color} onUpdate={(amount) => updateProgress(cat.id, amount)} />;
+                        else content = <RingCard id={cat.id} label={cat.label} progress={cat.progress} color={cat.color} onUpdate={() => {}} />;
 
                         return (
                             <div key={cat.id} className={`${wrapperClass} transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10`}>
