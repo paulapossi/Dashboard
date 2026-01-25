@@ -18,6 +18,8 @@
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.91.1",
     "@vercel/analytics": "^1.6.1",
     "caniuse-lite": "^1.0.30001760",
     "class-variance-authority": "^0.7.1",
