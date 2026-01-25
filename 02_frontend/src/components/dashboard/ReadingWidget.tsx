@@ -2,6 +2,8 @@
 
 import { useState, useEffect, MouseEvent } from "react";
 import { Check, Minus } from "lucide-react";
+import { calculateReadingProgress, getCompletedCount } from "@/lib/progress-calculator";
+import { WEEKLY_GOALS } from "@/lib/constants";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleReadingDay, undoReadingDay } from "@/actions/reading-actions";
@@ -88,9 +90,8 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
         }
     };
 
-    const completedCount = Object.values(data).filter(Boolean).length;
-    const WEEKLY_GOAL = 7;
-    const progressPercent = (completedCount / WEEKLY_GOAL) * 100;
+    const completedCount = getCompletedCount(data);
+    const progressPercent = calculateReadingProgress(data);
 
     const getColorStatus = (count: number) => {
         if (count >= 7) return { stroke: "#a855f7", shadow: "rgba(168,85,247,0.6)" };
@@ -139,7 +140,7 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
 
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ZIEL: {completedCount} / {WEEKLY_GOAL} TAGE
+                        ZIEL: {completedCount} / {WEEKLY_GOALS.READING_DAYS} TAGE
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
@@ -148,13 +149,13 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
                             disabled={isPending}
                             className={`
                             flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
-                            ${completedCount >= WEEKLY_GOAL
+                            ${completedCount >= WEEKLY_GOALS.READING_DAYS
                                     ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] border border-purple-500"
                                     : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
                                 }
                         `}
                         >
-                            {completedCount >= WEEKLY_GOAL ? (
+                            {completedCount >= WEEKLY_GOALS.READING_DAYS ? (
                                 <>Erledigt <Check size={16} strokeWidth={3} /></>
                             ) : (
                                 <>+ Eintragen</>

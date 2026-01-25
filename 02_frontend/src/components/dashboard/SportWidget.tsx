@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleSportUnit, undoSportUnit } from "@/actions/sport-actions";
 import { useRouter } from "next/navigation";
+import { calculateSportProgress, getCompletedCount } from "@/lib/progress-calculator";
+import { WEEKLY_GOALS } from "@/lib/constants";
 
 // Muss exakt gleich sein wie in der Page/Action
 type SportData = {
@@ -38,6 +40,9 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
             setData(initialData);
         }
     }, [initialData]);
+
+    const completedCount = getCompletedCount(data);
+    const progressPercent = calculateSportProgress(data);
 
     const handleQuickAdd = async (e: MouseEvent) => {
         e.preventDefault();
@@ -92,10 +97,6 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
         }
     };
 
-    const completedCount = Object.values(data).filter(Boolean).length;
-    const WEEKLY_GOAL = 4;
-    const progressPercent = (completedCount / WEEKLY_GOAL) * 100;
-
     const getColorStatus = (count: number) => {
         if (count >= 4) return { stroke: "#22c55e", shadow: "rgba(34,197,94,0.6)" };
         if (count === 3) return { stroke: "#06b6d4", shadow: "rgba(6,182,212,0.6)" };
@@ -144,7 +145,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
 
                 <div className="flex flex-col gap-3 items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ZIEL: {completedCount} / {WEEKLY_GOAL}
+                        ZIEL: {completedCount} / {WEEKLY_GOALS.SPORT_SESSIONS}
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
@@ -153,13 +154,13 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                             disabled={isPending}
                             className={`
                             flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
-                            ${completedCount >= WEEKLY_GOAL
+                            ${completedCount >= WEEKLY_GOALS.SPORT_SESSIONS
                                     ? "bg-green-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] border border-green-500"
                                     : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
                                 }
                         `}
                         >
-                            {completedCount >= WEEKLY_GOAL ? (
+                            {completedCount >= WEEKLY_GOALS.SPORT_SESSIONS ? (
                                 <>Fertig <Check size={16} strokeWidth={3} /></>
                             ) : (
                                 <>+ Eintragen</>

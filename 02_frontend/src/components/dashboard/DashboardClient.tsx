@@ -16,6 +16,14 @@ import { Search, Bell, UserCircle, Save } from "lucide-react";
 import { createBrainDump } from "@/actions/mental-actions";
 import { useRouter } from "next/navigation";
 import type { SportData, ReadingData, NutritionData, RelationshipData, MentalData, UniData } from "@/types";
+import { 
+    calculateSportProgress, 
+    calculateReadingProgress, 
+    calculateNutritionProgress, 
+    calculateRelationshipProgress, 
+    calculateMentalProgress, 
+    calculateUniProgress 
+} from "@/lib/progress-calculator";
 
 interface DashboardClientProps {
     sportData?: SportData;
@@ -28,23 +36,15 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ sportData, readingData, nutritionData, relationshipData, mentalData, uniData }: DashboardClientProps) {
     const router = useRouter();
-    
-    // Calculation functions for progress
-    const getSportProgress = () => sportData ? Math.round((Object.values(sportData).filter(Boolean).length / 4) * 100) : 0;
-    const getReadingProgress = () => readingData ? Math.round((Object.values(readingData).filter(Boolean).length / 7) * 100) : 0;
-    const getNutritionProgress = () => nutritionData ? Math.round((Object.values(nutritionData).filter(Boolean).length / 4) * 100) : 0;
-    const getRelationshipProgress = () => relationshipData ? Math.round((relationshipData.daysTogether / relationshipData.weeklyGoal) * 100) : 0;
-    const getMentalProgress = () => mentalData ? Math.round((mentalData.meTimeHours / mentalData.weeklyGoal) * 100) : 0;
-    const getUniProgress = () => uniData ? Math.round((uniData.sessions / uniData.weeklyGoal) * 100) : 0;
 
     // Memoized categories based on current data
     const categories = useMemo(() => [
-        { id: "uni", label: "Uni", progress: getUniProgress(), color: "indigo" },
-        { id: "sport", label: "Sport", progress: getSportProgress(), color: "teal" },
-        { id: "lesen", label: "Lesen", progress: getReadingProgress(), color: "yellow" },
-        { id: "food", label: "Ernährung", progress: getNutritionProgress(), color: "green" },
-        { id: "paula", label: "Paula", progress: getRelationshipProgress(), color: "red" },
-        { id: "mental", label: "Mental", progress: getMentalProgress(), color: "purple" },
+        { id: "uni", label: "Uni", progress: calculateUniProgress(uniData), color: "indigo" },
+        { id: "sport", label: "Sport", progress: calculateSportProgress(sportData), color: "teal" },
+        { id: "lesen", label: "Lesen", progress: calculateReadingProgress(readingData), color: "yellow" },
+        { id: "food", label: "Ernährung", progress: calculateNutritionProgress(nutritionData), color: "green" },
+        { id: "paula", label: "Paula", progress: calculateRelationshipProgress(relationshipData), color: "red" },
+        { id: "mental", label: "Mental", progress: calculateMentalProgress(mentalData), color: "purple" },
     ], [sportData, readingData, nutritionData, relationshipData, mentalData, uniData]);
 
     const [isLoaded, setIsLoaded] = useState(false);

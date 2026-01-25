@@ -2,6 +2,7 @@
 
 import { useState, useEffect, MouseEvent } from "react";
 import { Check, Brain, Minus } from "lucide-react";
+import { calculateMentalProgress } from "@/lib/progress-calculator";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -77,7 +78,10 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
         }
     };
 
-    const progressPercent = Math.min((hours / WEEKLY_GOAL) * 100, 100);
+    const progressPercent = calculateMentalProgress({ 
+        meTimeHours: hours, 
+        weeklyGoal: WEEKLY_GOAL 
+    });
 
     const getColorStatus = (count: number) => {
         if (count >= WEEKLY_GOAL) return { stroke: "#a855f7", shadow: "rgba(168,85,247,0.6)" };

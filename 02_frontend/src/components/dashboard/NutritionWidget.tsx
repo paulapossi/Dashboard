@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleNutritionHabit, undoNutritionHabit } from "@/actions/nutrition-actions";
 import { useRouter } from "next/navigation";
+import { calculateNutritionProgress, getCompletedCount } from "@/lib/progress-calculator";
 
 type NutritionData = {
     protein: boolean;
@@ -86,9 +87,9 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
         }
     };
 
-    const completedCount = Object.values(data).filter(Boolean).length;
+    const completedCount = getCompletedCount(data);
     const DAILY_GOAL = 4;
-    const progressPercent = (completedCount / DAILY_GOAL) * 100;
+    const progressPercent = calculateNutritionProgress(data);
 
     const getColorStatus = (count: number) => {
         if (count >= 4) return { stroke: "#10b981", shadow: "rgba(16,185,129,0.6)" };

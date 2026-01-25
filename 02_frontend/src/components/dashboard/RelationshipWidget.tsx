@@ -2,6 +2,7 @@
 
 import { useState, useEffect, MouseEvent } from "react";
 import { Check, Heart, Minus } from "lucide-react";
+import { calculateRelationshipProgress } from "@/lib/progress-calculator";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleTogether, decreaseDaysTogether } from "@/actions/relationship-actions";
@@ -84,7 +85,11 @@ export default function RelationshipWidget({ initialData }: RelationshipWidgetPr
         }
     };
 
-    const progressPercent = Math.min((daysTogether / weeklyGoal) * 100, 100);
+    const progressPercent = calculateRelationshipProgress({ 
+        isTogether: isTogetherToday,
+        daysTogether, 
+        weeklyGoal 
+    });
 
     const getColorStatus = (days: number) => {
         if (days >= 4) return { stroke: "#e11d48", shadow: "rgba(225,29,72,0.6)" };

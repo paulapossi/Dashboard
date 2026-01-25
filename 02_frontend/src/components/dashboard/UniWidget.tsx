@@ -2,6 +2,7 @@
 
 import { useState, useEffect, MouseEvent } from "react";
 import { Check, GraduationCap, Minus } from "lucide-react";
+import { calculateUniProgress } from "@/lib/progress-calculator";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { quickLogUniSession, decreaseUniSession } from "@/actions/uni-actions";
@@ -83,7 +84,10 @@ export default function UniWidget({ initialData }: UniWidgetProps) {
         router.push("/uni");
     };
 
-    const progressPercent = Math.min((sessions / WEEKLY_GOAL) * 100, 100);
+    const progressPercent = calculateUniProgress({ 
+        sessions, 
+        weeklyGoal: WEEKLY_GOAL 
+    });
 
     const getColorStatus = (count: number) => {
         if (count >= 5) return { stroke: "#6366f1", shadow: "rgba(99,102,241,0.6)" };
