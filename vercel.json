@@ -1,26 +1,30 @@
-# Vercel Deployment Configuration
+{
+  "buildCommand": "cd 02_frontend && npm run build",
+  "outputDirectory": "02_frontend/.next",
+  "installCommand": "cd 02_frontend && npm install",
+  "framework": "nextjs",
+  "functions": {
+    "maxDuration": 10
+  },
+  "headers": [
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/public/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ]
+}
 
-# Build Settings
-framework: nextjs
-buildCommand: cd 02_frontend && npm run build
-outputDirectory: 02_frontend/.next
-installCommand: cd 02_frontend && npm install
-
-# Environment Variables (Set in Vercel Dashboard)
-# DATABASE_URL - Supabase Connection String (with ?pgbouncer=true for pooling)
-# NODE_ENV - production
-
-# Functions Configuration
-functions:
-  maxDuration: 10
-
-# Caching
-headers:
-  - source: /_next/static/:path*
-    headers:
-      - key: Cache-Control
-        value: public, max-age=31536000, immutable
-  - source: /public/:path*
-    headers:
-      - key: Cache-Control
-        value: public, max-age=86400
