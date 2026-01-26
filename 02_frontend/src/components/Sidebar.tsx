@@ -1,11 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, GraduationCap, Dumbbell, BookOpen, Leaf, Heart, Brain, Settings } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { LayoutDashboard, GraduationCap, Dumbbell, BookOpen, Leaf, Heart, Brain, Settings, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import { useState } from "react";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const supabase = createClient();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await supabase.auth.signOut();
+        router.push("/login");
+        router.refresh();
+    };
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -53,11 +65,22 @@ export default function Sidebar() {
             </nav>
 
             {/* Bottom Area */}
-            <div className="mt-auto pt-6 border-t border-slate-800">
-                <div className="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-white cursor-pointer transition-colors">
-                    <Settings size={22} />
-                    <span className="font-medium">Settings</span>
-                </div>
+            <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
+                <Link href="/settings">
+                    <div className="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-white cursor-pointer transition-colors rounded-2xl hover:bg-slate-800/50">
+                        <Settings size={22} />
+                        <span className="font-medium">Settings</span>
+                    </div>
+                </Link>
+                
+                <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:text-red-300 cursor-pointer transition-colors rounded-2xl hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <LogOut size={22} />
+                    <span className="font-medium">{isLoggingOut ? "Abmelden..." : "Abmelden"}</span>
+                </button>
             </div>
         </aside>
     );
