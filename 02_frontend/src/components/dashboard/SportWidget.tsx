@@ -148,7 +148,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     {/* Gym & Cardio Badges */}
                     <div className="flex flex-col gap-2 w-full px-3 relative z-20 pointer-events-auto">
                         {/* Gym Badge */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             <motion.button
                                 onClick={(e) => handleToggleBadge('gym', e)}
                                 disabled={isPending}
@@ -167,7 +167,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                         (data.gym1 || data.gym2) ? 'text-blue-300' : 'text-slate-400'
                                     }`}>Gym</span>
                                 </div>
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-1.5 ml-auto">
                                     {[data.gym1, data.gym2].map((done, i) => (
                                         <div
                                             key={i}
@@ -182,19 +182,21 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                     ))}
                                 </div>
                             </motion.button>
-                            {(data.gym1 || data.gym2) && (
-                                <button
-                                    onClick={(e) => handleUndoBadge('gym', e)}
-                                    disabled={isPending}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
-                                >
-                                    <Minus size={14} />
-                                </button>
-                            )}
+                            <div className="w-8 flex items-center justify-center">
+                                {(data.gym1 || data.gym2) && (
+                                    <button
+                                        onClick={(e) => handleUndoBadge('gym', e)}
+                                        disabled={isPending}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                    >
+                                        <Minus size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Cardio Badge */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             <motion.button
                                 onClick={(e) => handleToggleBadge('cardio', e)}
                                 disabled={isPending}
@@ -213,7 +215,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                         (data.run1 || data.run2) ? 'text-green-300' : 'text-slate-400'
                                     }`}>Ausdauer</span>
                                 </div>
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-1.5 ml-auto">
                                     {[data.run1, data.run2].map((done, i) => (
                                         <div
                                             key={i}
@@ -228,15 +230,17 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                     ))}
                                 </div>
                             </motion.button>
-                            {(data.run1 || data.run2) && (
-                                <button
-                                    onClick={(e) => handleUndoBadge('cardio', e)}
-                                    disabled={isPending}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
-                                >
-                                    <Minus size={14} />
-                                </button>
-                            )}
+                            <div className="w-8 flex items-center justify-center">
+                                {(data.run1 || data.run2) && (
+                                    <button
+                                        onClick={(e) => handleUndoBadge('cardio', e)}
+                                        disabled={isPending}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                    >
+                                        <Minus size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
