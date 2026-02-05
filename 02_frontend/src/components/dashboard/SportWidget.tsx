@@ -121,47 +121,74 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center py-2 gap-3">
+                <div className="flex-1 flex flex-col items-center justify-center py-2 gap-4">
                     <div className="text-5xl font-bold text-white">
                         {completedCount}
                     </div>
                     
-                    {/* Streak Dots */}
-                    <div className="flex gap-2">
-                        {Array.from({ length: 4 }).map((_, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: index * 0.05, type: "spring" }}
-                                className={`w-4 h-4 rounded-full ${
-                                    index < completedCount
-                                        ? 'bg-gradient-to-br from-green-400 to-green-600 shadow-[0_0_10px_rgba(34,197,94,0.6)]'
-                                        : 'bg-slate-800 border border-slate-700'
-                                }`}
-                            />
-                        ))}
-                    </div>
+                    {/* Gym & Cardio Badges */}
+                    <div className="flex flex-col gap-2 w-full px-4">
+                        {/* Gym Badge */}
+                        <motion.div
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.1, type: "spring" }}
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                                (data.gym1 || data.gym2)
+                                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
+                                    : 'bg-slate-800/50 border border-slate-700'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl">🏋️</span>
+                                <span className={`text-sm font-semibold ${
+                                    (data.gym1 || data.gym2) ? 'text-blue-300' : 'text-slate-400'
+                                }`}>Gym</span>
+                            </div>
+                            <div className="flex gap-1">
+                                {[data.gym1, data.gym2].map((done, i) => (
+                                    <div
+                                        key={i}
+                                        className={`w-2 h-2 rounded-full ${
+                                            done 
+                                                ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
+                                                : 'bg-slate-700'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </motion.div>
 
-                    {/* Mini Bar Chart */}
-                    <div className="flex items-end gap-2 h-12">
-                        {[2, 3, 4, 3].map((value, index) => {
-                            const isActive = index < completedCount;
-                            const height = (value / 4) * 100;
-                            return (
-                                <motion.div
-                                    key={index}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${height}%` }}
-                                    transition={{ delay: 0.2 + index * 0.1, type: "spring" }}
-                                    className={`w-6 rounded-t ${
-                                        isActive
-                                            ? 'bg-gradient-to-t from-green-500 to-green-400'
-                                            : 'bg-slate-800'
-                                    }`}
-                                />
-                            );
-                        })}
+                        {/* Cardio Badge */}
+                        <motion.div
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.2, type: "spring" }}
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                                (data.run1 || data.run2)
+                                    ? 'bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.3)]' 
+                                    : 'bg-slate-800/50 border border-slate-700'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl">🏃</span>
+                                <span className={`text-sm font-semibold ${
+                                    (data.run1 || data.run2) ? 'text-green-300' : 'text-slate-400'
+                                }`}>Ausdauer</span>
+                            </div>
+                            <div className="flex gap-1">
+                                {[data.run1, data.run2].map((done, i) => (
+                                    <div
+                                        key={i}
+                                        className={`w-2 h-2 rounded-full ${
+                                            done 
+                                                ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
+                                                : 'bg-slate-700'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
 

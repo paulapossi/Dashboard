@@ -114,13 +114,13 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                     <div className="text-emerald-500/20"><Leaf size={20} /></div>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
-                    <div className="text-5xl font-bold text-white">
+                <div className="flex-1 flex flex-col items-center justify-center py-2 gap-3">
+                    <div className="text-4xl font-bold text-white">
                         {completedCount}/4
                     </div>
                     
                     {/* 4 Habits as checkboxes */}
-                    <div className="flex flex-col gap-2 w-full px-4">
+                    <div className="flex flex-col gap-1.5 w-full px-3">
                         {orderedKeys.map((key, index) => {
                             const isComplete = data[key];
                             const labels = { protein: 'Protein', vitamins: 'Vitamine', water: 'Wasser', sweets: 'Keine Süßigkeiten' };
@@ -132,21 +132,21 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: index * 0.1, type: "spring" }}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ${
+                                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all duration-300 ${
                                         isComplete 
                                             ? 'bg-emerald-500/20 border border-emerald-500/40' 
                                             : 'bg-slate-800/50 border border-slate-700'
                                     }`}
                                 >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-all ${
+                                    <div className={`w-4 h-4 rounded flex items-center justify-center border-2 transition-all flex-shrink-0 ${
                                         isComplete 
                                             ? 'bg-emerald-500 border-emerald-500' 
                                             : 'border-slate-600'
                                     }`}>
-                                        {isComplete && <Check size={14} className="text-white" strokeWidth={3} />}
+                                        {isComplete && <Check size={12} className="text-white" strokeWidth={3} />}
                                     </div>
                                     <span className="text-xs">{icons[key]}</span>
-                                    <span className={`text-sm flex-1 ${
+                                    <span className={`text-xs flex-1 ${
                                         isComplete ? 'text-emerald-300' : 'text-slate-400'
                                     }`}>
                                         {labels[key]}
