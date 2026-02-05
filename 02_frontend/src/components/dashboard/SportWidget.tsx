@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, Minus, Flame } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { toggleSportUnit, undoSportUnit } from "@/actions/sport-actions";
+import { toggleSportUnit } from "@/actions/sport-actions";
 import { useRouter } from "next/navigation";
 import { calculateSportProgress, getCompletedCount } from "@/lib/progress-calculator";
 import { WEEKLY_GOALS } from "@/lib/constants";
@@ -44,53 +44,38 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
     const completedCount = getCompletedCount(data);
     const progressPercent = calculateSportProgress(data);
 
-    const handleQuickAdd = async (e: MouseEvent) => {
+    const handleToggleBadge = async (type: 'gym' | 'cardio', e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (isPending) return;
 
-        const keys: (keyof SportData)[] = ['gym1', 'run1', 'gym2', 'run2'];
-        const nextKey = keys.find(key => !data[key]);
+        // Determine which key to toggle based on current state
+        let key: keyof SportData | null = null;
+        
+        if (type === 'gym') {
+            // Toggle gym: if none done, set gym1. If gym1 done, set gym2. If both done, unset gym2.
+            if (!data.gym1) key = 'gym1';
+            else if (!data.gym2) key = 'gym2';
+            else key = 'gym2'; // Unset gym2
+        } else {
+            // Toggle cardio: if none done, set run1. If run1 done, set run2. If both done, unset run2.
+            if (!data.run1) key = 'run1';
+            else if (!data.run2) key = 'run2';
+            else key = 'run2'; // Unset run2
+        }
 
-        if (nextKey) {
-            // Optimistic Update
-            const newData = { ...data, [nextKey]: true };
+        if (key) {
+            const newData = { ...data, [key]: !data[key] };
             setData(newData);
-            
+
             setIsPending(true);
             try {
-                await toggleSportUnit(nextKey);
+                await toggleSportUnit(key);
                 router.refresh();
             } catch (error) {
                 console.error("Failed to toggle sport unit:", error);
                 setData(data); // Rollback
-            } finally {
-                setIsPending(false);
-            }
-        }
-    };
-
-    const handleUndo = async (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (isPending) return;
-        
-        // Optimistic undo: find last active
-        const keys: (keyof SportData)[] = ['run2', 'gym2', 'run1', 'gym1'];
-        const lastKey = keys.find(key => data[key]);
-
-        if (lastKey) {
-            const newData = { ...data, [lastKey]: false };
-            setData(newData);
-
-            setIsPending(true);
-            try {
-                await undoSportUnit();
-                router.refresh();
-            } catch (error) {
-                setData(data);
             } finally {
                 setIsPending(false);
             }
@@ -127,105 +112,83 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     </div>
                     
                     {/* Gym & Cardio Badges */}
-                    <div className="flex flex-col gap-2 w-full px-4">
+                    <div className="flex flex-col gap-2 w-full px-3 relative z-20 pointer-events-auto">
                         {/* Gym Badge */}
-                        <motion.div
+                        <motion.button
+                            onClick={(e) => handleToggleBadge('gym', e)}
+                            disabled={isPending}
                             initial={{ x: -20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             transition={{ delay: 0.1, type: "spring" }}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                            className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
                                 (data.gym1 || data.gym2)
-                                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                                    : 'bg-slate-800/50 border border-slate-700'
+                                    ? 'bg-blue-500/20 border border-blue-500/40' 
+                                    : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
                             }`}
                         >
                             <div className="flex items-center gap-2">
-                                <span className="text-2xl">🏋️</span>
+                                <span className="text-xl">🏋️</span>
                                 <span className={`text-sm font-semibold ${
                                     (data.gym1 || data.gym2) ? 'text-blue-300' : 'text-slate-400'
                                 }`}>Gym</span>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1.5">
                                 {[data.gym1, data.gym2].map((done, i) => (
                                     <div
                                         key={i}
-                                        className={`w-2 h-2 rounded-full ${
+                                        className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
                                             done 
-                                                ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
-                                                : 'bg-slate-700'
+                                                ? 'bg-blue-400 border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
+                                                : 'bg-transparent border-slate-600'
                                         }`}
-                                    />
+                                    >
+                                        {done && <Check size={10} className="text-white" strokeWidth={3} />}
+                                    </div>
                                 ))}
                             </div>
-                        </motion.div>
+                        </motion.button>
 
                         {/* Cardio Badge */}
-                        <motion.div
+                        <motion.button
+                            onClick={(e) => handleToggleBadge('cardio', e)}
+                            disabled={isPending}
                             initial={{ x: -20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             transition={{ delay: 0.2, type: "spring" }}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                            className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
                                 (data.run1 || data.run2)
-                                    ? 'bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.3)]' 
-                                    : 'bg-slate-800/50 border border-slate-700'
+                                    ? 'bg-green-500/20 border border-green-500/40' 
+                                    : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
                             }`}
                         >
                             <div className="flex items-center gap-2">
-                                <span className="text-2xl">🏃</span>
+                                <span className="text-xl">🏃</span>
                                 <span className={`text-sm font-semibold ${
                                     (data.run1 || data.run2) ? 'text-green-300' : 'text-slate-400'
                                 }`}>Ausdauer</span>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1.5">
                                 {[data.run1, data.run2].map((done, i) => (
                                     <div
                                         key={i}
-                                        className={`w-2 h-2 rounded-full ${
+                                        className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
                                             done 
-                                                ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
-                                                : 'bg-slate-700'
+                                                ? 'bg-green-400 border-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
+                                                : 'bg-transparent border-slate-600'
                                         }`}
-                                    />
+                                    >
+                                        {done && <Check size={10} className="text-white" strokeWidth={3} />}
+                                    </div>
                                 ))}
                             </div>
-                        </motion.div>
+                        </motion.button>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-xs text-slate-400">
-                        {Math.round(progressPercent)}% Complete • Streak: {completedCount}
+                    <span className="text-xs text-slate-400 pointer-events-none">
+                        {Math.round(progressPercent)}% Complete • {completedCount}/4
                     </span>
-
-                    <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
-                        <button
-                            onClick={handleQuickAdd}
-                            disabled={isPending}
-                            className={`
-                            flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 active:scale-95
-                            ${completedCount >= WEEKLY_GOALS.SPORT_SESSIONS
-                                    ? "bg-green-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] border border-green-500"
-                                    : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
-                                }
-                        `}
-                        >
-                            {completedCount >= WEEKLY_GOALS.SPORT_SESSIONS ? (
-                                <>Fertig <Check size={16} strokeWidth={3} /></>
-                            ) : (
-                                <>+ Eintragen</>
-                            )}
-                        </button>
-                        
-                        {completedCount > 0 && (
-                            <button
-                                onClick={handleUndo}
-                                disabled={isPending}
-                                className="w-12 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
-                            >
-                                <Minus size={18} />
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>
