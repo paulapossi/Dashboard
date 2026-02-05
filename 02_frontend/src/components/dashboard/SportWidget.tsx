@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleSportUnit, undoSportUnit } from "@/actions/sport-actions";
@@ -121,31 +121,53 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center py-2">
-                    <div className="relative w-32 h-32 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-                            <motion.circle
-                                cx="64" cy="64" r="56"
-                                stroke={currentStyle.stroke}
-                                strokeWidth="10"
-                                fill="transparent"
-                                strokeLinecap="round"
-                                strokeDasharray="351"
-                                animate={{ strokeDashoffset: 351 - (351 * progressPercent / 100) }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                style={{ filter: `drop-shadow(0 0 15px ${currentStyle.shadow})` }}
+                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
+                    <div className="text-5xl font-bold text-white">
+                        {completedCount}
+                    </div>
+                    
+                    {/* Streak Dots */}
+                    <div className="flex gap-1.5">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: index * 0.05, type: "spring" }}
+                                className={`w-3 h-3 rounded-full ${
+                                    index < completedCount
+                                        ? 'bg-gradient-to-br from-green-400 to-green-600 shadow-[0_0_10px_rgba(34,197,94,0.6)]'
+                                        : 'bg-slate-800 border border-slate-700'
+                                }`}
                             />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
-                        </div>
+                        ))}
+                    </div>
+
+                    {/* Mini Bar Chart */}
+                    <div className="flex items-end gap-1.5 h-16">
+                        {[2, 3, 4, 3].map((value, index) => {
+                            const isActive = index < completedCount;
+                            const height = (value / 4) * 100;
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ height: 0 }}
+                                    animate={{ height: `${height}%` }}
+                                    transition={{ delay: 0.2 + index * 0.1, type: "spring" }}
+                                    className={`w-8 rounded-t-md ${
+                                        isActive
+                                            ? 'bg-gradient-to-t from-green-500 to-green-400'
+                                            : 'bg-slate-800'
+                                    }`}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ZIEL: {completedCount} / {WEEKLY_GOALS.SPORT_SESSIONS}
+                    <span className="text-xs text-slate-400">
+                        {Math.round(progressPercent)}% Complete • Streak: {completedCount}
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">

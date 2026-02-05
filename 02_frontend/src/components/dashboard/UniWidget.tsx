@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, GraduationCap, Minus } from "lucide-react";
+import { Check, GraduationCap, Minus, TrendingUp } from "lucide-react";
 import { calculateUniProgress } from "@/lib/progress-calculator";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -113,31 +113,50 @@ export default function UniWidget({ initialData }: UniWidgetProps) {
                     <div className="text-indigo-500/20"><GraduationCap size={20} /></div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center py-2 pointer-events-none">
-                    <div className="relative w-32 h-32 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-                            <motion.circle
-                                cx="64" cy="64" r="56"
-                                stroke={currentStyle.stroke}
-                                strokeWidth="10"
-                                fill="transparent"
-                                strokeLinecap="round"
-                                strokeDasharray="351"
-                                animate={{ strokeDashoffset: 351 - (351 * progressPercent / 100) }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                style={{ filter: `drop-shadow(0 0 15px ${currentStyle.shadow})` }}
+                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4 pointer-events-none">
+                    <div className="text-5xl font-bold text-white">
+                        {sessions}h
+                    </div>
+                    
+                    {/* Line Chart for Deep Work Sessions */}
+                    <div className="w-full px-4">
+                        <svg width="100%" height="60" viewBox="0 0 140 60" className="overflow-visible">
+                            {/* Grid lines */}
+                            <line x1="0" y1="15" x2="140" y2="15" stroke="#334155" strokeWidth="0.5" opacity="0.3" />
+                            <line x1="0" y1="30" x2="140" y2="30" stroke="#334155" strokeWidth="0.5" opacity="0.3" />
+                            <line x1="0" y1="45" x2="140" y2="45" stroke="#334155" strokeWidth="0.5" opacity="0.3" />
+                            
+                            {/* Data points */}
+                            <motion.polyline
+                                points="0,45 20,30 40,35 60,25 80,30 100,20 120,15"
+                                fill="none"
+                                stroke="#6366f1"
+                                strokeWidth="2"
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: sessions / WEEKLY_GOAL }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                style={{ filter: 'drop-shadow(0 0 8px rgba(99,102,241,0.6))' }}
                             />
+                            
+                            {/* Current session marker */}
+                            {sessions > 0 && (
+                                <motion.circle
+                                    cx={Math.min(120, sessions * 17)}
+                                    cy={60 - (sessions * 6)}
+                                    r="4"
+                                    fill="#6366f1"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.5, type: "spring" }}
+                                />
+                            )}
                         </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
-                        </div>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest pointer-events-none">
-                        WOCHE: {sessions} / {WEEKLY_GOAL} SESSIONS
+                    <span className="text-xs text-slate-400 pointer-events-none">
+                        {Math.round(progressPercent)}% Complete • {WEEKLY_GOAL - sessions}h verbleibend
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">

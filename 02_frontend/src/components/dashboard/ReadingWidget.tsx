@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, Moon } from "lucide-react";
 import { calculateReadingProgress, getCompletedCount } from "@/lib/progress-calculator";
 import { WEEKLY_GOALS } from "@/lib/constants";
 import { motion } from "framer-motion";
@@ -116,31 +116,46 @@ export default function ReadingWidget({ initialData }: ReadingWidgetProps) {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center py-2">
-                    <div className="relative w-32 h-32 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-                            <motion.circle
-                                cx="64" cy="64" r="56"
-                                stroke={currentStyle.stroke}
-                                strokeWidth="10"
-                                fill="transparent"
-                                strokeLinecap="round"
-                                strokeDasharray="351"
-                                animate={{ strokeDashoffset: 351 - (351 * progressPercent / 100) }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                style={{ filter: `drop-shadow(0 0 15px ${currentStyle.shadow})` }}
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
-                        </div>
+                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
+                    <div className="text-5xl font-bold text-white">
+                        {completedCount}
+                    </div>
+                    
+                    {/* Moon Phases - 7 days */}
+                    <div className="grid grid-cols-7 gap-2">
+                        {Array.from({ length: 7 }).map((_, index) => {
+                            const isCompleted = index < completedCount;
+                            const moonPhase = index / 6; // 0 to 1
+                            
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ delay: index * 0.05, type: "spring" }}
+                                    className="relative"
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                        isCompleted 
+                                            ? 'bg-gradient-to-br from-purple-400 to-purple-600 shadow-[0_0_15px_rgba(168,85,247,0.6)]' 
+                                            : 'bg-slate-800 border border-slate-700'
+                                    }`}>
+                                        {isCompleted && (
+                                            <Moon size={16} className="text-white" fill="white" />
+                                        )}
+                                        {!isCompleted && (
+                                            <Moon size={16} className="text-slate-600" />
+                                        )}
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ZIEL: {completedCount} / {WEEKLY_GOALS.READING_DAYS} TAGE
+                    <span className="text-xs text-slate-400">
+                        {Math.round(progressPercent)}% Complete • {7 - completedCount} verbleibend
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">

@@ -106,31 +106,56 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
                     <div className="text-purple-500/20"><Brain size={20} /></div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center py-2">
-                    <div className="relative w-32 h-32 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-                            <motion.circle
-                                cx="64" cy="64" r="56"
-                                stroke={currentStyle.stroke}
-                                strokeWidth="10"
-                                fill="transparent"
-                                strokeLinecap="round"
-                                strokeDasharray="351"
-                                animate={{ strokeDashoffset: 351 - (351 * progressPercent / 100) }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                style={{ filter: `drop-shadow(0 0 15px ${currentStyle.shadow})` }}
+                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
+                    <div className="text-5xl font-bold text-white">
+                        {hours}h
+                    </div>
+                    
+                    {/* Half-Circle Gauge */}
+                    <div className="relative w-40 h-20">
+                        <svg width="160" height="80" viewBox="0 0 160 80" className="overflow-visible">
+                            {/* Background arc */}
+                            <path
+                                d="M 10 70 A 70 70 0 0 1 150 70"
+                                fill="none"
+                                stroke="#334155"
+                                strokeWidth="12"
+                                opacity="0.3"
                             />
+                            
+                            {/* Progress arc */}
+                            <motion.path
+                                d="M 10 70 A 70 70 0 0 1 150 70"
+                                fill="none"
+                                stroke="#a855f7"
+                                strokeWidth="12"
+                                strokeLinecap="round"
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: Math.min(hours / WEEKLY_GOAL, 1) }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                style={{ 
+                                    filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))',
+                                    strokeDasharray: 1,
+                                    strokeDashoffset: 0
+                                }}
+                            />
+                            
+                            {/* Percentage text */}
+                            <text
+                                x="80"
+                                y="65"
+                                textAnchor="middle"
+                                className="text-xl font-bold fill-white"
+                            >
+                                {Math.round(progressPercent)}%
+                            </text>
                         </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
-                        </div>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ZIEL: {hours} / {WEEKLY_GOAL} STUNDEN
+                    <span className="text-xs text-slate-400">
+                        {WEEKLY_GOAL - hours}h verbleibend • Woche
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">

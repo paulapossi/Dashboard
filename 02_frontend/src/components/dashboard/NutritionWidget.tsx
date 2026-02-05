@@ -114,31 +114,58 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                     <div className="text-emerald-500/20"><Leaf size={20} /></div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center py-2">
-                    <div className="relative w-32 h-32 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="#334155" strokeWidth="10" fill="transparent" opacity="0.3" />
-                            <motion.circle
-                                cx="64" cy="64" r="56"
-                                stroke={currentStyle.stroke}
-                                strokeWidth="10"
-                                fill="transparent"
-                                strokeLinecap="round"
-                                strokeDasharray="351"
-                                animate={{ strokeDashoffset: 351 - (351 * progressPercent / 100) }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                style={{ filter: `drop-shadow(0 0 15px ${currentStyle.shadow})` }}
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white">{Math.round(progressPercent)}%</span>
-                        </div>
+                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
+                    <div className="text-5xl font-bold text-white">
+                        {completedCount}/4
+                    </div>
+                    
+                    {/* 4 Mini Gauges for each habit */}
+                    <div className="grid grid-cols-2 gap-3 w-full px-2">
+                        {orderedKeys.map((key, index) => {
+                            const isComplete = data[key];
+                            const labels = { protein: 'Pro', vitamins: 'Vit', water: 'H₂O', sweets: 'No🍫' };
+                            
+                            return (
+                                <motion.div
+                                    key={key}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: index * 0.1, type: "spring" }}
+                                    className="flex flex-col items-center gap-1"
+                                >
+                                    <div className="relative w-12 h-12">
+                                        <svg className="w-full h-full transform -rotate-90">
+                                            <circle cx="24" cy="24" r="20" stroke="#334155" strokeWidth="3" fill="transparent" opacity="0.3" />
+                                            <motion.circle
+                                                cx="24" cy="24" r="20"
+                                                stroke={isComplete ? "#10b981" : "#334155"}
+                                                strokeWidth="3"
+                                                fill="transparent"
+                                                strokeLinecap="round"
+                                                strokeDasharray="125.6"
+                                                animate={{ 
+                                                    strokeDashoffset: isComplete ? 0 : 125.6,
+                                                }}
+                                                transition={{ duration: 0.6, ease: "easeOut" }}
+                                                style={{ 
+                                                    filter: isComplete ? 'drop-shadow(0 0 8px rgba(16,185,129,0.6))' : 'none' 
+                                                }}
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            {isComplete && <Check size={14} className="text-emerald-400" strokeWidth={3} />}
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-medium">{labels[key]}</span>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        HEUTE: {completedCount} / {DAILY_GOAL}
+                    <span className="text-xs text-slate-400">
+                        {Math.round(progressPercent)}% Complete • Heute
                     </span>
 
                     <div className="flex w-full gap-2 relative z-20 pointer-events-auto">
