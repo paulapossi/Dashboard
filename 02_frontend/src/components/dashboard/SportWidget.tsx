@@ -186,9 +186,9 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                 <button
                                     onClick={(e) => handleUndoBadge('gym', e)}
                                     disabled={isPending}
-                                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
                                 >
-                                    <Minus size={16} />
+                                    <Minus size={14} />
                                 </button>
                             )}
                         </div>
@@ -232,9 +232,9 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                 <button
                                     onClick={(e) => handleUndoBadge('cardio', e)}
                                     disabled={isPending}
-                                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
                                 >
-                                    <Minus size={16} />
+                                    <Minus size={14} />
                                 </button>
                             )}
                         </div>
