@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, MouseEvent } from "react";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { toggleSportUnit } from "@/actions/sport-actions";
@@ -82,6 +82,40 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
         }
     };
 
+    const handleUndoBadge = async (type: 'gym' | 'cardio', e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isPending) return;
+
+        // Undo: remove last completed session
+        let key: keyof SportData | null = null;
+        
+        if (type === 'gym') {
+            if (data.gym2) key = 'gym2';
+            else if (data.gym1) key = 'gym1';
+        } else {
+            if (data.run2) key = 'run2';
+            else if (data.run1) key = 'run1';
+        }
+
+        if (key) {
+            const newData = { ...data, [key]: false };
+            setData(newData);
+
+            setIsPending(true);
+            try {
+                await toggleSportUnit(key);
+                router.refresh();
+            } catch (error) {
+                console.error("Failed to undo sport unit:", error);
+                setData(data); // Rollback
+            } finally {
+                setIsPending(false);
+            }
+        }
+    };
+
     const getColorStatus = (count: number) => {
         if (count >= 4) return { stroke: "#22c55e", shadow: "rgba(34,197,94,0.6)" };
         if (count === 3) return { stroke: "#06b6d4", shadow: "rgba(6,182,212,0.6)" };
@@ -114,74 +148,96 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     {/* Gym & Cardio Badges */}
                     <div className="flex flex-col gap-2 w-full px-3 relative z-20 pointer-events-auto">
                         {/* Gym Badge */}
-                        <motion.button
-                            onClick={(e) => handleToggleBadge('gym', e)}
-                            disabled={isPending}
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.1, type: "spring" }}
-                            className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
-                                (data.gym1 || data.gym2)
-                                    ? 'bg-blue-500/20 border border-blue-500/40' 
-                                    : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
-                            }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl">🏋️</span>
-                                <span className={`text-sm font-semibold ${
-                                    (data.gym1 || data.gym2) ? 'text-blue-300' : 'text-slate-400'
-                                }`}>Gym</span>
-                            </div>
-                            <div className="flex gap-1.5">
-                                {[data.gym1, data.gym2].map((done, i) => (
-                                    <div
-                                        key={i}
-                                        className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                                            done 
-                                                ? 'bg-blue-400 border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
-                                                : 'bg-transparent border-slate-600'
-                                        }`}
-                                    >
-                                        {done && <Check size={10} className="text-white" strokeWidth={3} />}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.button>
+                        <div className="flex gap-2">
+                            <motion.button
+                                onClick={(e) => handleToggleBadge('gym', e)}
+                                disabled={isPending}
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.1, type: "spring" }}
+                                className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
+                                    (data.gym1 || data.gym2)
+                                        ? 'bg-blue-500/20 border border-blue-500/40' 
+                                        : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">🏋️</span>
+                                    <span className={`text-sm font-semibold ${
+                                        (data.gym1 || data.gym2) ? 'text-blue-300' : 'text-slate-400'
+                                    }`}>Gym</span>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    {[data.gym1, data.gym2].map((done, i) => (
+                                        <div
+                                            key={i}
+                                            className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                done 
+                                                    ? 'bg-blue-400 border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' 
+                                                    : 'bg-transparent border-slate-600'
+                                            }`}
+                                        >
+                                            {done && <Check size={10} className="text-white" strokeWidth={3} />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.button>
+                            {(data.gym1 || data.gym2) && (
+                                <button
+                                    onClick={(e) => handleUndoBadge('gym', e)}
+                                    disabled={isPending}
+                                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                >
+                                    <Minus size={16} />
+                                </button>
+                            )}
+                        </div>
 
                         {/* Cardio Badge */}
-                        <motion.button
-                            onClick={(e) => handleToggleBadge('cardio', e)}
-                            disabled={isPending}
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.2, type: "spring" }}
-                            className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
-                                (data.run1 || data.run2)
-                                    ? 'bg-green-500/20 border border-green-500/40' 
-                                    : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
-                            }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl">🏃</span>
-                                <span className={`text-sm font-semibold ${
-                                    (data.run1 || data.run2) ? 'text-green-300' : 'text-slate-400'
-                                }`}>Ausdauer</span>
-                            </div>
-                            <div className="flex gap-1.5">
-                                {[data.run1, data.run2].map((done, i) => (
-                                    <div
-                                        key={i}
-                                        className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                                            done 
-                                                ? 'bg-green-400 border-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
-                                                : 'bg-transparent border-slate-600'
-                                        }`}
-                                    >
-                                        {done && <Check size={10} className="text-white" strokeWidth={3} />}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.button>
+                        <div className="flex gap-2">
+                            <motion.button
+                                onClick={(e) => handleToggleBadge('cardio', e)}
+                                disabled={isPending}
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                                className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-300 active:scale-95 ${
+                                    (data.run1 || data.run2)
+                                        ? 'bg-green-500/20 border border-green-500/40' 
+                                        : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-700/70'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">🏃</span>
+                                    <span className={`text-sm font-semibold ${
+                                        (data.run1 || data.run2) ? 'text-green-300' : 'text-slate-400'
+                                    }`}>Ausdauer</span>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    {[data.run1, data.run2].map((done, i) => (
+                                        <div
+                                            key={i}
+                                            className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                done 
+                                                    ? 'bg-green-400 border-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
+                                                    : 'bg-transparent border-slate-600'
+                                            }`}
+                                        >
+                                            {done && <Check size={10} className="text-white" strokeWidth={3} />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.button>
+                            {(data.run1 || data.run2) && (
+                                <button
+                                    onClick={(e) => handleUndoBadge('cardio', e)}
+                                    disabled={isPending}
+                                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-rose-400 transition-all active:scale-95"
+                                >
+                                    <Minus size={16} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
