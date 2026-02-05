@@ -121,20 +121,20 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     <div className="text-slate-500 text-xl">⋮</div>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center py-4 gap-4">
+                <div className="flex-1 flex flex-col items-center justify-center py-2 gap-3">
                     <div className="text-5xl font-bold text-white">
                         {completedCount}
                     </div>
                     
                     {/* Streak Dots */}
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                         {Array.from({ length: 4 }).map((_, index) => (
                             <motion.div
                                 key={index}
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: index * 0.05, type: "spring" }}
-                                className={`w-3 h-3 rounded-full ${
+                                className={`w-4 h-4 rounded-full ${
                                     index < completedCount
                                         ? 'bg-gradient-to-br from-green-400 to-green-600 shadow-[0_0_10px_rgba(34,197,94,0.6)]'
                                         : 'bg-slate-800 border border-slate-700'
@@ -144,7 +144,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                     </div>
 
                     {/* Mini Bar Chart */}
-                    <div className="flex items-end gap-1.5 h-16">
+                    <div className="flex items-end gap-2 h-12">
                         {[2, 3, 4, 3].map((value, index) => {
                             const isActive = index < completedCount;
                             const height = (value / 4) * 100;
@@ -154,7 +154,7 @@ export default function SportWidget({ initialData }: SportWidgetProps) {
                                     initial={{ height: 0 }}
                                     animate={{ height: `${height}%` }}
                                     transition={{ delay: 0.2 + index * 0.1, type: "spring" }}
-                                    className={`w-8 rounded-t-md ${
+                                    className={`w-6 rounded-t ${
                                         isActive
                                             ? 'bg-gradient-to-t from-green-500 to-green-400'
                                             : 'bg-slate-800'

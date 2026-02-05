@@ -130,13 +130,12 @@ export default function MentalWidget({ initialData }: MentalWidgetProps) {
                                 stroke="#a855f7"
                                 strokeWidth="12"
                                 strokeLinecap="round"
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: Math.min(hours / WEEKLY_GOAL, 1) }}
+                                strokeDasharray="220"
+                                initial={{ strokeDashoffset: 220 }}
+                                animate={{ strokeDashoffset: 220 - (220 * Math.min(hours / WEEKLY_GOAL, 1)) }}
                                 transition={{ duration: 1, ease: "easeOut" }}
                                 style={{ 
-                                    filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))',
-                                    strokeDasharray: 1,
-                                    strokeDashoffset: 0
+                                    filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))'
                                 }}
                             />
                             

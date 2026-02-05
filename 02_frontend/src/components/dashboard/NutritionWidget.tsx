@@ -119,44 +119,38 @@ export default function NutritionWidget({ initialData }: NutritionWidgetProps) {
                         {completedCount}/4
                     </div>
                     
-                    {/* 4 Mini Gauges for each habit */}
-                    <div className="grid grid-cols-2 gap-3 w-full px-2">
+                    {/* 4 Habits as checkboxes */}
+                    <div className="flex flex-col gap-2 w-full px-4">
                         {orderedKeys.map((key, index) => {
                             const isComplete = data[key];
-                            const labels = { protein: 'Pro', vitamins: 'Vit', water: 'H₂O', sweets: 'No🍫' };
+                            const labels = { protein: 'Protein', vitamins: 'Vitamine', water: 'Wasser', sweets: 'Keine Süßigkeiten' };
+                            const icons = { protein: '🥩', vitamins: '🥦', water: '💧', sweets: '🚫' };
                             
                             return (
                                 <motion.div
                                     key={key}
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: index * 0.1, type: "spring" }}
-                                    className="flex flex-col items-center gap-1"
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ${
+                                        isComplete 
+                                            ? 'bg-emerald-500/20 border border-emerald-500/40' 
+                                            : 'bg-slate-800/50 border border-slate-700'
+                                    }`}
                                 >
-                                    <div className="relative w-12 h-12">
-                                        <svg className="w-full h-full transform -rotate-90">
-                                            <circle cx="24" cy="24" r="20" stroke="#334155" strokeWidth="3" fill="transparent" opacity="0.3" />
-                                            <motion.circle
-                                                cx="24" cy="24" r="20"
-                                                stroke={isComplete ? "#10b981" : "#334155"}
-                                                strokeWidth="3"
-                                                fill="transparent"
-                                                strokeLinecap="round"
-                                                strokeDasharray="125.6"
-                                                animate={{ 
-                                                    strokeDashoffset: isComplete ? 0 : 125.6,
-                                                }}
-                                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                                style={{ 
-                                                    filter: isComplete ? 'drop-shadow(0 0 8px rgba(16,185,129,0.6))' : 'none' 
-                                                }}
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            {isComplete && <Check size={14} className="text-emerald-400" strokeWidth={3} />}
-                                        </div>
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-all ${
+                                        isComplete 
+                                            ? 'bg-emerald-500 border-emerald-500' 
+                                            : 'border-slate-600'
+                                    }`}>
+                                        {isComplete && <Check size={14} className="text-white" strokeWidth={3} />}
                                     </div>
-                                    <span className="text-[10px] text-slate-400 font-medium">{labels[key]}</span>
+                                    <span className="text-xs">{icons[key]}</span>
+                                    <span className={`text-sm flex-1 ${
+                                        isComplete ? 'text-emerald-300' : 'text-slate-400'
+                                    }`}>
+                                        {labels[key]}
+                                    </span>
                                 </motion.div>
                             );
                         })}
